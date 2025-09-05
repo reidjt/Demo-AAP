@@ -1,0 +1,57 @@
+---
+- name: Configure SNMPv3 on RHEL 9
+  hosts: rhel9_hosts
+  become: true
+  collections:
+    - redhat.rhel_system_roles
+    - community.general
+
+  vars:
+    # snmp_packages:
+    #   - net-snmp
+    #   - net-snmp-utils
+    # snmp_user: snmpadmin
+    # snmp_auth_pass: "YourAuthPass123"
+    # snmp_priv_pass: "YourPrivPass456"
+    # snmp_auth_protocol: SHA
+    # snmp_priv_protocol: AES
+
+  vars_files:
+    - ./files/snmp_vars.yml
+  tasks:
+
+    - name: Install SNMP packages
+      ansible.builtin.package:
+        name: "{{ snmp_packages }}"
+        state: present
+
+    - name: Create SNMPv3 user
+      community.general.snmp_user:
+        name: "{{ snmp_user }}"
+        auth_protocol: "{{ snmp_auth_protocol }}"
+        auth_pass: "{{ snmp_auth_pass }}"
+        priv_protocol: "{{ snmp_priv_protocol }}"
+        priv_pass: "{{ snmp_priv_pass }}"
+        state: present
+
+    - name: Enable and start SNMP service
+      ansible.builtin.service:
+        name: snmpd
+        enabled: true
+        state: started
+
+    - name: Open SNMP port in firewalld
+      ansible.posix.firewalld:
+        port: 161/udp
+        permanent: true
+        state: enabled
+        immediate: true
+
+    - name: Validate SNMP service is running
+      ansible.builtin.command: systemctl status snmpd
+      register: snmp_status
+      changed_when: false
+
+    - name: Debug SNMP status
+      ansible.builtin.debug:
+        var: snmp_status.stdout_lines

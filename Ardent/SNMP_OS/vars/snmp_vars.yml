@@ -1,0 +1,19 @@
+---
+#SNMP2 Variables
+snmp_packages:
+  - net-snmp
+  - net-snmp-utils
+snmp_user: snmpadmin
+snmp_auth_pass: "YourAuthPass123"
+snmp_priv_pass: "YourPrivPass456"
+snmp_auth_protocol: SHA
+snmp_priv_protocol: AES
+
+#SNMP Variables
+# Set the path to your local snmpd.conf file
+snmpd_conf_local_path: "./files/rhel_snmpd.conf"
+# SNMP trap port
+snmp_trap_port: 162
+# SNMP daemon service name on RHEL 9
+snmpd_service_name: "snmpd.service"
+...

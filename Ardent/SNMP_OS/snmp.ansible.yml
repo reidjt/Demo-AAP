@@ -1,0 +1,61 @@
+---
+- name: Configure SNMPv3 traps on RHEL 9
+  hosts: your_rhel_servers
+  become: true
+
+  vars:
+    # # Set the path to your local snmpd.conf file
+    # snmpd_conf_local_path: "./files/rhel_snmpd.conf"
+    # # SNMP trap port
+    # snmp_trap_port: 162
+    # # SNMP daemon service name on RHEL 9
+    # snmpd_service_name: "snmpd.service"
+
+  vars_files:
+    - ./vars/snmp_vars.yml
+
+  tasks:
+    - name: Ensure net-snmp packages are installed
+      ansible.builtin.package:
+        name:
+          - net-snmp
+          - net-snmp-utils
+      ansible.builtin.tags:
+        - install
+
+    - name: Use firewalld system role to open the SNMP trap port
+      ansible.builtin.include_role:
+        name: redhat.rhel_system_roles.firewall
+      vars:
+        firewall:
+          - port: "{{ snmp_trap_port }}/udp"
+            state: enabled
+            permanent: true
+            immediate: true
+      ansible.builtin.tags:
+        - firewall
+
+    - name: Copy the SNMP configuration file
+      ansible.builtin.copy:
+        src: "{{ snmpd_conf_local_path }}"
+        dest: "/etc/snmp/snmpd.conf"
+        owner: root
+        group: root
+        mode: '0600'
+      ansible.builtin.tags:
+        - config
+      notify: Restart SNMP service
+
+    - name: Enable and start the SNMP service
+      ansible.builtin.systemd_service:
+        name: "{{ snmpd_service_name }}"
+        state: started
+        enabled: true
+      ansible.builtin.tags:
+        - service
+
+  handlers:
+    - name: Restart SNMP service
+      ansible.builtin.systemd_service:
+        name: "{{ snmpd_service_name }}"
+        state: restarted

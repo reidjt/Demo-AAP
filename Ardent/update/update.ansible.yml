@@ -1,0 +1,22 @@
+---
+- name: update server
+  hosts: all
+  tasks:
+    - name: update RHEL9
+      when: ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_major_version'] == "9"
+      ansible.builtin.package:
+        name: "*"
+        state: latest
+    - name: update Ubuntu 24.04
+      when: ansible_facts['distribution'] == "Ubuntu" and ansible_facts['distribution_version'] == "24.04"
+      ansible.builtin.package:
+        name: "*"
+        state: latest
+    - name: update Susa
+      when: ansible_facts['distribution'] == "SLES" and ansible_facts['distribution_major_version'] == "15"
+      ansible.builtin.package:
+        name: "*"
+        state: latest
+    - name: update Windows 2022 server
+      ansible.windows.win_updates:
+      when: ansible_facts['distribution'] == "Microsoft Windows Server 2022"
