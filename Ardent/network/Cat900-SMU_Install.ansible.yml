@@ -1,0 +1,29 @@
+---
+- name: "PLAY 1: WORKING WITH IOS USER MODULE"
+  hosts: cisco_cat
+  connection: network_cli
+  tasks:
+    - name: "TASK 1: Connect to Cisco Catalyst 9000 and check to see if in install mode"
+      register: install_mode
+      cisco.ios.ios_command:
+        commands:
+          - show install
+    - name: "TASK 2: If not in install mode, then put switch into install mode"
+      cisco.ios.ios_config:
+        lines:
+          - configure terminal
+          - install mode
+        save_when: changed
+      when: '"install" not in install_mode.stdout[0]'
+    - name: "TASK 3: Copy SMU to switch"
+      cisco.ios.ios_command:
+        commands:
+          - scp ./files/cat9k_iosxe_smu_upgrade.img {{ ansible_user }}@{{ inventory_hostname }}:/cat9k_iosxe_smu_upgrade.img
+    - name: "TASK 4: Install SMU"
+      cisco.ios.ios_command:
+        commands:
+          - install cat9k_iosxe_smu_upgrade.img
+    - name: "FINAL TASK: Verify SMU installation"
+      cisco.ios.ios_command:
+        commands:
+          - show install
