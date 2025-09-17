@@ -1,0 +1,10 @@
+#Playbook to gather facts from remote hosts
+---
+- name: Gather Facts from Remote Hosts
+  hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Display gathered facts
+      debug:
+        var: ansible_facts
+...
