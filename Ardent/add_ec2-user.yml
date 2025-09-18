@@ -11,48 +11,48 @@
       sudoers_file: /etc/sudoers.d/turing
 
   tasks:
-      - name: Ensure turing group exists
-          group:
-              name: "{{ turing_group }}"
-              state: present
-      - name: Ensure ec2-user exists and is in turing group
-          user:
-              name: "{{ ec2_user }}"
-              groups: "{{ turing_group }}"
-              append: yes
-              shell: /bin/bash
-              state: present
-              create_home: yes
+    - name: 'Ensure turing group exists'
+      group:
+        name: "{{ turing_group }}"
+        state: present
+    - name: "Ensure ec2-user exists and is in turing group"
+      user:
+        name: "{{ ec2_user }}"
+        groups: "{{ turing_group }}"
+        append: yes
+        shell: /bin/bash
+        state: present
+        create_home: yes
 
-      - name: Allow turing group passwordless sudo
-          copy:
-              dest: "{{ sudoers_file }}"
-              content: "%{{ turing_group }} ALL=(ALL) NOPASSWD:ALL\n"
-              owner: root
-              group: root
-              mode: '0440'
+    - name: "Allow turing group passwordless sudo"
+      copy:
+        dest: "{{ sudoers_file }}"
+        content: "%{{ turing_group }} ALL=(ALL) NOPASSWD:ALL\n"
+        owner: root
+        group: root
+        mode: '0440'
 
-      - name: Ensure .ssh directory exists for ec2-user
-          file:
-              path: "{{ ssh_key_dir }}"
-              state: directory
-              owner: "{{ ec2_user }}"
-              group: "{{ ec2_user }}"
-              mode: '0700'
+    - name: "Ensure .ssh directory exists for ec2-user"
+      file:
+        path: "{{ ssh_key_dir }}"
+        state: directory
+        owner: "{{ ec2_user }}"
+        group: "{{ ec2_user }}"
+        mode: '0700'
 
-      - name: Generate SSH key pair for ec2-user if not present
-          become_user: "{{ ec2_user }}"
-          openssh_keypair:
-              path: "{{ ssh_key_dir }}/id_rsa"
-              type: rsa
-              size: 4096
-              mode: '0600'
-          when: not lookup('file', ssh_key_dir + '/id_rsa', errors='ignore')
+    - name: "Generate SSH key pair for ec2-user if not present"
+      become_user: "{{ ec2_user }}"
+      openssh_keypair:
+        path: "{{ ssh_key_dir }}/id_rsa"
+        type: rsa
+        size: 4096
+        mode: '0600'
+        when: not lookup('file', ssh_key_dir + '/id_rsa', errors='ignore')
 
-      - name: Copy authorized_keys to ec2-user profile
-          copy:
-              src: "{{ authorized_keys_src }}"
-              dest: "{{ ssh_key_dir }}/authorized_keys"
-              owner: "{{ ec2_user }}"
-              group: "{{ ec2_user }}"
-              mode: '0600'
+    - name: Copy authorized_keys to ec2-user profile
+      copy:
+        src: "{{ authorized_keys_src }}"
+        dest: "{{ ssh_key_dir }}/authorized_keys"
+        owner: "{{ ec2_user }}"
+        group: "{{ ec2_user }}"
+        mode: '0600'
