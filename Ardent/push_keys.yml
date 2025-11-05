@@ -1,0 +1,21 @@
+---
+- name: PushKeys to Linux Servers.
+# refrence https://itsfoss.com/disable-ipv6-ubuntu-linux/
+  hosts: Linux-Servers
+  become: true
+  become_method: sudo 
+  become_user: root
+  vars_files:
+    
+  vars:
+     
+
+  gather_facts: yes
+  tasks:
+
+  # T-1 pushed my ssh  keys to nodes I wil be managing in my network
+    - name: T-1 Push SSH Keys to Nodes
+      ansible.posix.authorized_key:
+        user: user
+        state: present
+        key: "{{ lookup('file', './james-pubkey/id_ed25519.pub') }}"

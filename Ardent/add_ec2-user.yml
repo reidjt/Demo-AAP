@@ -43,8 +43,8 @@
     - name: "Generate SSH key pair for ec2-user if not present"
       become_user: "{{ ec2_user }}"
       openssh_keypair:
-        path: "{{ ssh_key_dir }}/id_rsa"
-        type: rsa
+        path: "{{ ssh_key_dir }}/id_ed25519"
+        type: ed25519
         size: 4096
         mode: '0600'
         when: not lookup('file', ssh_key_dir + '/id_rsa', errors='ignore')
