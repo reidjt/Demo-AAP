@@ -1,7 +1,7 @@
 ---
 - name: PushKeys to Linux Servers.
 # refrence https://itsfoss.com/disable-ipv6-ubuntu-linux/
-  hosts: Linux-Servers
+  hosts: all
   become: true
   become_method: sudo 
   become_user: root
