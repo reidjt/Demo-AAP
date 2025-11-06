@@ -1,6 +1,6 @@
 ---
 - name: gather facts on Microsoft servers
-  hosts: windows
+  hosts: all
   become: false
   vars_files:
     - vars/vars/yml
