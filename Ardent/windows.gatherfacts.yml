@@ -1,0 +1,18 @@
+---
+- name: gather facts on Microsoft servers
+  hosts: windows
+  become: false
+  vars_files:
+    - vars/vars/yml
+  vars:
+  tasks:
+    - ansible.windows.setup:
+      register: setup_out
+    - ansible.builtin.debug:
+        var: setup_out
+
+    - ansible.windows.win_ping:
+      register: ping_out
+    - ansible.builtin.debug:
+        var: ping_out
+...
