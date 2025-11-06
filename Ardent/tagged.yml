@@ -1,0 +1,154 @@
+---
+# refrence https://itsfoss.com/disable-ipv6-ubuntu-linux/
+- name: P-1 PushKeys to Linux Servers
+  hosts: all
+  become: true
+  become_method: sudo
+  become_user: root
+  vars_files:
+  gather_facts: yes
+  tags:
+    - push_keys
+    - linux
+
+  tasks:
+    - name: P-1_T-1 Push SSH Keys to Nodes
+      ansible.posix.authorized_key:
+        user: user
+        state: present
+        key: "{{ lookup('file', './james-pubkey/id_ed25519.pub') }}"
+      tags: 
+          - push_keys
+          - linux
+
+- name: P-2 "Create Turing Group"
+  hosts: all
+  become: yes
+  tags:
+    - turing
+    - linux
+
+  tasks:
+    - name: P-2_T-1 "Ensure turing group exists"
+      ansible.builtin.group:
+        name: turing
+        state: present
+      tags:
+        - turing
+        - linux
+
+    - name: P-2_T-2 "Add Sudoers.d/turing file"
+      copy:
+        dest: /etc/sudoers.d/turing
+        content: "%turing ALL=(ALL) NOPASSWD:ALL\n"
+        owner: root
+        group: root
+        mode: '0440'
+      tags:
+        - turing
+        - linux
+        - sudoers
+
+- name: P-3 Create User
+  hosts: all
+  become: yes
+  vars: 
+    u-name: user
+    st8: present
+    password_var: Ch@ngeMe123!
+  vars_files:
+    - vault.yml
+
+  tags:
+    - create-user
+    - linux
+
+  tasks:
+    - name: P-3_T-1 "Ensure user exists"
+      ansible.builtin.user:
+        name: '{{ u-name }}'
+        shell: /bin/bash
+        state: '{{ st8 }}'
+        home: /home/{{ u-name }}
+        create_home: yes 
+      tags:
+        - create-user
+        - linux
+
+    - name: P-3_T-2 "Set password for user"
+      ansible.builtin.user:
+        name: '{{ u-name }}'
+        password: "{{ password_var | password_hash('sha512') }}"
+      tags:
+        - create-user
+        - linux
+
+    - name: P-3_T-3 "Ensure user has .ssh directory"
+      file: 
+        directory": /home/{{ u-name }}/.ssh
+        state: directory
+        owner: '{{ u-name }}'
+        group: '{{ u-name }}'
+        mode: '0700'
+      tags:
+        - create-user
+        - linux
+
+    - name: P-3_T-4 "Check to see if the User has Keys if not then create them"
+      become_user: '{{ u-name }}'
+      comunity.crypto.openssh_keypair:
+      path: /home/{{ u-name }}/.ssh/id_ed25519
+      type: ed25519
+      size: 4096
+      mode: '0600'
+      when: not lookup('file', '/home/' + u-name + '/.ssh/id_ed25519', errors='ignore')
+      tags:
+        - create-user
+        - linux
+
+- name: P-4 Add User to Turing Group
+  hosts: all
+  become: yes
+  vars: 
+    u-name: user
+    st8: present
+  tags:
+    - turing-user
+    - linux
+
+  tasks:
+    - name: P-4_T-1 "Ensure user is in turing group"
+      user:
+        name: '{{ u-name }}'
+        groups: turing
+        append: yes
+        state: '{{ st8 }}'
+      tags:
+        - turing-user
+        - linux
+
+- name: P-5 Install Linux Packages
+  hosts: all
+  become: yes
+  vars:
+    st8: present
+    package_list:
+      - git
+      - vim
+      - curl
+      - wget
+      - net-tools
+      - htop
+  tags:
+    - linux-packages
+    - linux
+
+  tasks:
+    - name: P-5_T-1 "Install Linux Packages"
+      ansible.builtin.package:
+        name: "{{ package_list }}"
+        state: present
+      tags:
+        - linux-packages
+        - linux
+...
