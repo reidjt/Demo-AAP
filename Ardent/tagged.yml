@@ -369,4 +369,49 @@
     - name: P-10_T3 Reboot to apply the new boot target
       ansible.builtin.reboot:
       when: ansible_facts['systemd']['default_target'] != desired_target
+
+- name: P-11 Re Enable IPv6 on Linux systems
+  hosts: all
+  become: yes # Needed for root-level file management and sysctl changes
+  gather_facts: yes
+  tags:
+    - enable-ipv6
+    - linux
+  tasks:
+    - name: P-11_T1 Ensure IPv6 is enabled in /etc/sysctl.conf (set values to 0)
+      ansible.builtin.sysctl:
+        name: "{{ item }}"
+        value: '0' # Set to 0 to enable IPv6
+        state: present
+        reload: yes # Apply the setting immediately after making the change
+        sysctl_file: /etc/sysctl.conf
+      loop:
+        - net.ipv6.conf.all.disable_ipv6
+        - net.ipv6.conf.default.disable_ipv6
+        - net.ipv6.conf.lo.disable_ipv6
+      register: sysctl_changes
+
+    - name: P-11_T2 Remove 'ipv6.disable=1' from the GRUB kernel command line
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        # Use absent state to ensure the pattern is completely removed from the line
+        regexp: 'ipv6.disable=1'
+        state: absent
+      register: grub_change
+
+    - name: P-11_T3 Update the GRUB configuration file (RHEL/CentOS/SUSE)
+      ansible.builtin.command: grub2-mkconfig -o /boot/grub2/grub.cfg
+      when: ansible_os_family in ['RedHat', 'Suse'] and grub_change.changed
+      changed_when: true
+
+    - name: P-11_T4 Update the GRUB configuration file (Debian/Ubuntu)
+      ansible.builtin.command: update-grub
+      when: ansible_os_family == 'Debian' and grub_change.changed
+      changed_when: true
+
+    - name: P-11_T5 Reboot the systems to apply all kernel/sysctl changes
+      ansible.builtin.reboot:
+        reboot_timeout: 600
+      # Only reboot if either the sysctl or grub configuration actually changed
+      when: sysctl_changes.changed or grub_change.changed
 ...
