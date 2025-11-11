@@ -47,7 +47,7 @@
       tags:
         - no_turing
         - linux
-        
+
     - name: P-2_T-2 "Add Sudoers.d/turing file"
       copy:
         dest: /etc/sudoers.d/{{ sudoers_file_var }}
@@ -66,7 +66,10 @@
   vars: 
     # u-name: user
     # st8: present
-    
+    sudo_group_map:
+      RedHat: "wheel"
+      Debian: "sudo"
+      Suse: "wheel"
   vars_files:
     - ./vars/vars.yml
     - ./vars/vault.yml
@@ -83,6 +86,15 @@
         state: '{{ st8 }}'
         home: /home/{{ u_name }}
         create_home: yes 
+      tags:
+        - create-user
+        - linux
+
+    - name: P-3_T-1A Add user to group for Sudo access
+      ansible.builtin.user:
+        name: '{{ u_name }}'
+        groups: '{{ sudo_group_map[ansible_os_family] }}'
+        append: yes
       tags:
         - create-user
         - linux
@@ -166,4 +178,72 @@
       tags:
         - linux-packages
         - linux
+
+- name: P-6 Patching and updating
+  hosts: all
+  become: yes # Needed for package management
+  gather_facts: yes # Needed to use ansible_os_family
+  tags:
+    - patching
+    - linux
+
+  tasks:
+    - name: P-6_T-1 Run safe 'apt upgrade' for Debian/Ubuntu systems
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600 # Update apt cache if older than 1 hour
+        upgrade: safe # The 'safe' upgrade option only upgrades what can be upgraded without installing new packages
+      when: ansible_os_family == 'Debian'
+      tags:
+        - patching
+        - linux
+
+    - name: P-6_T-2 Run safe 'dnf/yum/zypper update' for RHEL/SUSE systems
+      ansible.builtin.package:
+        name: '*'
+        state: latest
+      # This task works correctly for RedHat and Suse families to only update installed packages
+      when: ansible_os_family in ['RedHat', 'Suse']
+      tags:
+        - patching
+        - linux
+
+
+- name: P-7 Perform a full distribution upgrade (dist-upgrade)
+  hosts: all
+  become: yes # Needed for package management
+  gather_facts: yes # Needed to use ansible_os_family
+  tags:
+    - dist-upgrade
+    - linux
+  tasks:
+    - name: Run 'apt full-upgrade' (dist-upgrade) for Debian/Ubuntu systems
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600 # Update apt cache if older than 1 hour
+        upgrade: dist # or 'full' - they are synonyms
+      when: ansible_os_family == 'Debian'
+
+    - name: Run 'dnf/yum/zypper update' for RHEL/SUSE systems
+      # For RPM-based systems, 'state: latest' with name: '*' performs a full update
+      ansible.builtin.package:
+        name: '*'
+        state: latest
+      when: ansible_os_family in ['RedHat', 'Suse']
+
+    - name: Check if reboot is required (common after dist-upgrades, e.g. kernel updates)
+      ansible.builtin.command: needs-restarting -r
+      register: reboot_check_result
+      ignore_errors: true # The command exits with error code 1 if a reboot is needed
+      changed_when: reboot_check_result.rc == 1
+      when: ansible_os_family in ['RedHat', 'Suse']
+
+    - name: Perform a system reboot if necessary
+      ansible.builtin.reboot:
+      # Use the reboot-required file created by apt or the command result from dnf check
+      when:
+        - ansible_os_family == 'Debian' and ansible_facts['system']['lsb']['release'] == "reboot required" # Example apt check
+        - ansible_os_family in ['RedHat', 'Suse'] and reboot_check_result.rc == 1
+
+
 ...

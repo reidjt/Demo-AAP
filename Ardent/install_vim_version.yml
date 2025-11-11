@@ -1,0 +1,35 @@
+---
+- name: Install specific version of VIM and lock it
+  hosts: all
+  become: yes
+  gather_facts: yes
+
+  vars:
+    # Define the desired versions mapped by OS family
+    vim_versions:
+      Debian: "2:9.0.1800-1ubuntu1"
+      RedHat: "9.0.1477-7.el9_0.1"
+      Suse:   "9.0.1477-7.el9_0.1"
+    vim_pkg_name: "vim"
+
+  tasks:
+    - name: Ensure the specific version of VIM is installed
+      ansible.builtin.package:
+        name: "{{ vim_pkg_name }}={{ vim_versions[ansible_os_family] }}"
+        state: present
+      register: install_result
+      # Note: The syntax for name=version works with apt, dnf, yum, and zypper
+
+    - name: Lock the VIM version on Debian/Ubuntu hosts (APT)
+      ansible.builtin.apt:
+        name: "{{ vim_pkg_name }}"
+        state: fixed # 'fixed' sets the package on hold in APT
+      when: ansible_os_family == 'Debian'
+
+    - name: Lock the VIM version on RHEL/CentOS/SUSE hosts (DNF/YUM Versionlock)
+      # This uses a community module, which might need installing on the AAP controller first.
+      community.general.dnf_versionlock:
+        name: "{{ vim_pkg_name }}-{{ vim_versions[ansible_os_family] }}"
+        state: present
+      when: ansible_os_family == 'RedHat' or ansible_os_family == 'Suse'
+
