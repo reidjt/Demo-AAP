@@ -4,7 +4,7 @@
   become: yes
 
   vars:
-      ec2_user: ec2-user
+      ec2_user: Ansible
       turing_group: turing
       ssh_key_dir: /home/ec2-user/.ssh
       authorized_keys_src: ./ssh/authorized_keys

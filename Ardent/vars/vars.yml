@@ -1,0 +1,17 @@
+---
+user_var: user
+# P-3 User Create
+u_name: user
+#Standard States
+st8: present
+grp_name_var: turing
+sudoers_file_var: /etc/sudoers.d/turing
+
+package_list:
+  - git
+  - vim
+  - curl
+  - wget
+  - net-tools
+  - htop
+...
