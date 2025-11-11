@@ -166,6 +166,10 @@
     #   - wget
     #   - net-tools
     #   - htop
+    # mapped_package_list
+    #  RedHat: httpd
+    #  Debian: apache2
+    #  Suse: apache2
   tags:
     - linux-packages
     - linux
@@ -177,6 +181,14 @@
         state: "{{ st8 }}"
       tags:
         - linux-packages
+        - linux
+
+    - name: P-5_T2 Install Maped Packages"
+      ansible.builtin.package:
+        name: "{{ mapped_package_list[ansible_os_family] }}"
+        state: "{{ st8 }}"
+      tags:
+        - mapped-packages-linux
         - linux
 
 - name: P-6 Patching and updating
@@ -340,7 +352,7 @@
       ansible.builtin.reboot:
       when: ansible_facts['systemd']['default_target'] != desired_target
 
-- name: P-10 disable GUI interface on Linux Servers
+- name: P-10 enable GUI interface on Linux Servers
   hosts: all
   become: yes
   gather_facts: yes
