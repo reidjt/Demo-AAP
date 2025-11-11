@@ -245,5 +245,90 @@
         - ansible_os_family == 'Debian' and ansible_facts['system']['lsb']['release'] == "reboot required" # Example apt check
         - ansible_os_family in ['RedHat', 'Suse'] and reboot_check_result.rc == 1
 
+- name: P-8 OS Configureation Changes
+  hosts: all
+  become: yes
+  gather_facts: yes
+  tags:
+    - os-config
+    - linux
 
+  tasks:
+    - name: P-8_T-1 Disable IPv6 on Linux systems
+      ansible.builtin.sysctl:
+        name: net.ipv6.conf.all.disable_ipv6
+        value: '1'
+        state: present
+        reload: yes
+        sysctl_file: /etc/sysctl.conf
+      loop: 
+        - net.ipv6.conf.all.disable_ipv6
+        - net.ipv6.conf.default.disable_ipv6
+        - net.ipv6.conf.lo.disable_ipv6
+      register: sysctl_changes
+      tags:
+        - no_ip_v6
+        - os-config
+        - linux
+
+    - name: P-8_T-2 Add 'ipv6.disable=1' to grub kernel parameters
+      ansible.builtin.lineinfile: 
+        path: /etc/default/grub
+        regexp: '^GRUB_CMDLINE_LINUX="(.*)"'
+        line: 'GRUB_CMDLINE_LINUX="\1 ipv6.disable=1"'
+        backrefs: yes
+      register: grub_update_result
+      tags:
+        - no_ip_v6
+        - os-config
+        - linux
+
+    - name: P-8_T-3 Update grub configuration if modified (RHEL/CENTOS/SUSE)
+      ansible.builtin.command: grub2-mkconfig -o /boot/grub2/grub.cfg
+      when: grub_update_result.changed and ansible_os_family in ['RedHat', 'Suse']
+      changed_when: true
+      tags:
+        - no_ip_v6
+        - os-config
+        - linux
+
+    - name: P-8_T-4 Update grub configuration if modified (Debian/Ubuntu)
+      ansible.builtin.command: update-grub
+      when: grub_update_result.changed and ansible_os_family == 'Debian'
+      changed_when: true
+      tags:
+        - no_ip_v6
+        - os-config
+        - linux
+    
+    - name: P-8_T-5 Reboot if grub was updated
+      ansible.builtin.reboot:
+      when: sysctl_changes.changed or grub_update_result.changed
+      tags:
+        - no_ip_v6
+        - os-config
+        - linux
+
+- name: P-9 disable GUI interface on Linux Servers
+  hosts: all
+  become: yes
+  gather_facts: yes
+  tags:
+    - disable-gui
+    - linux
+
+  tasks:
+    - name: P-9_T-1 Disable GUI on RHEL/CentOS systems
+      ansible.builtin.command: systemctl set-default multi-user.target
+      when: ansible_os_family == 'RedHat'
+      tags:
+        - disable-gui
+        - linux
+
+    - name: P-9_T-2 Disable GUI on Debian/Ubuntu systems
+      ansible.builtin.command: systemctl set-default multi-user.target
+      when: ansible_os_family == 'Debian'
+      tags:
+        - disable-gui
+        - linux
 ...
