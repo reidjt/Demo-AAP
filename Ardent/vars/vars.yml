@@ -5,7 +5,7 @@ u_name: user
 #Standard States
 st8: present
 grp_name_var: turing
-sudoers_file_var: /etc/sudoers.d/turing
+sudoers_file_var: turing
 
 package_list:
   - git

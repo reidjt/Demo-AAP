@@ -40,9 +40,17 @@
         - turing
         - linux
 
+    - name: P-2_T-1 Remove Sudoers File for group if it exists
+      ansible.builtin.file:
+        dest: /etc/sudoers.d/{{ sudoers_file_var }}
+        state: "{{ st8 }}"
+      tags:
+        - no_turing
+        - linux
+        
     - name: P-2_T-2 "Add Sudoers.d/turing file"
       copy:
-        dest: "{{ sudoers_file_var }}"
+        dest: /etc/sudoers.d/{{ sudoers_file_var }}
         content: "%turing ALL=(ALL) NOPASSWD:ALL\n"
         owner: root
         group: root
