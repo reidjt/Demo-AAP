@@ -316,19 +316,57 @@
   tags:
     - disable-gui
     - linux
+  vars:
+    # Set this variable to 'graphical' or 'multi-user'
+    boot_mode: "multi-user"
 
   tasks:
-    - name: P-9_T-1 Disable GUI on RHEL/CentOS systems
-      ansible.builtin.command: systemctl set-default multi-user.target
-      when: ansible_os_family == 'RedHat'
-      tags:
-        - disable-gui
-        - linux
+    - name: P-9_T1 Construct the full target name
+      ansible.builtin.set_fact:
+        desired_target: "{{ boot_mode }}.target"
+      
+    - name: P-9_T2 Ensure the desired target is the default boot target
+      ansible.builtin.file:
+        # Source link location is universal for systemd units
+        src: /usr/lib/systemd/system/{{ desired_target }}
+        # Destination link location is universal for systemd default target
+        dest: /etc/systemd/system/default.target
+        owner: root
+        group: root
+        state: link
+        force: yes
 
-    - name: P-9_T-2 Disable GUI on Debian/Ubuntu systems
-      ansible.builtin.command: systemctl set-default multi-user.target
-      when: ansible_os_family == 'Debian'
-      tags:
-        - disable-gui
-        - linux
+    - name: P-9_T3 Reboot to apply the new boot target
+      ansible.builtin.reboot:
+      when: ansible_facts['systemd']['default_target'] != desired_target
+
+- name: P-10 disable GUI interface on Linux Servers
+  hosts: all
+  become: yes
+  gather_facts: yes
+  tags:
+    - enable-gui
+    - linux
+  vars:
+    # Set this variable to 'graphical' or 'multi-user'
+    boot_mode: "graphical"
+
+  tasks:
+    - name: P-10_T1 Construct the full target name
+      ansible.builtin.set_fact:
+        desired_target: "{{ boot_mode }}.target"
+      
+    - name: P-10_T2 Ensure the desired target is the default boot target
+      ansible.builtin.file:
+        # Source link location is universal for systemd units
+        src: /usr/lib/systemd/system/{{ desired_target }}
+        # Destination link location is universal for systemd default target
+        dest: /etc/systemd/system/default.target
+        owner: root
+        group: root
+        state: link
+        force: yes
+    - name: P-10_T3 Reboot to apply the new boot target
+      ansible.builtin.reboot:
+      when: ansible_facts['systemd']['default_target'] != desired_target
 ...
