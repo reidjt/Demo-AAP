@@ -132,13 +132,13 @@
     # # The task was commented out due to the issues with the community.crypto.openssh_keypair module.
     - name: P-3_T-4a "Check to see if the User has Keys if not then create them"
       # become_user: '{{ u_name }}'
-      community.crypto.openssh_keypair:
+      #community.crypto.openssh_keypair:
+      ansible.builtin.openssh_keypair:
+        owner: '{{ u_name }}'
         path: /home/{{ u_name }}/.ssh/id_ed25519
         type: ed25519
-        size: 4096
         mode: 0600
       when: not ssh_key_stat.stat.exists
-      #when: not lookup('file', '/home/' + u_name + '/.ssh/id_ed25519', errors='ignore')
       ignore_errors: true
       tags:
         - create-user
@@ -158,11 +158,7 @@
         cmd: "ssh-keygen -t ed25519 -N '' -f {{ remote_key_path }}"
         # ^ -N '' sets an empty passphrase (no passphrase)
         # ^ -f specifies the filename
-      #become_user: '{{ u_name }}'
       when: not ssh_key_stat_a.stat.exists
-      # args:
-        # Prevents logging sensitive output (like key generation progress)
-        # no_log: true
       tags:
         - create-user
         - linux
