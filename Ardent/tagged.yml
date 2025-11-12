@@ -171,6 +171,8 @@
         owner: '{{ u_name }}'
         group: '{{ u_name }}'
         mode: "{{ '0600' if item.endswith('id_ed25519') else '0644' }}"
+      loop:
+        - /home/{{ u_name }}/.ssh/id_ed25519
       tags:
         - create-user
         - linux
