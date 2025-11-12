@@ -6,6 +6,7 @@ u_name: user
 st8: present
 grp_name_var: turing
 sudoers_file_var: turing
+remote_key_path: "/home/{{ u_name }}/.ssh/id_ed25519"
 
 package_list:
   - git

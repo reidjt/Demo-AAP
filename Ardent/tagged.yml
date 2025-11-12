@@ -108,7 +108,7 @@
         - linux
 
     - name: P-3_T-3 "Ensure user has .ssh directory"
-      file: 
+      ansible.builtin.file: 
         path: /home/{{ u_name }}/.ssh
         state: directory
         owner: '{{ u_name }}'
@@ -118,27 +118,43 @@
       tags:
         - create-user
         - linux
+
     - name: P-3_T-4 "Check to see if the User has Keys"
       ansible.builtin.stat:
-        path: "/home/{{ u_name }}/.ssh/id_ed25519"
+      path: "{{ remote_key_path }}"
+        #path: "/home/{{ u_name }}/.ssh/id_ed25519"
       register: user_ssh_key
       tags:
         - create-user
         - linux
 
-    - name: P-3_T-4 "Check to see if the User has Keys if not then create them"
+    # # The following task is commented out to prevent key generation during playbook runs.
+    # # The task was commented out due to the issues with the community.crypto.openssh_keypair module.
+    # - name: P-3_T-4 "Check to see if the User has Keys if not then create them"
+    #   become_user: '{{ u_name }}'
+    #   community.crypto.openssh_keypair:
+    #     path: /home/{{ u_name }}/.ssh/id_ed25519
+    #     type: ed25519
+    #     size: 4096
+    #     mode: 0600
+    #   when: not user_ssh_key.stat.exists
+    #   #when: not lookup('file', '/home/' + u_name + '/.ssh/id_ed25519', errors='ignore')
+    #   tags:
+    #     - create-user
+    #     - linux
+    - name: P-3_T-4 Generate the ED25519 Keypair using ssh-keygen shell command
+      ansible.builtin.shell:
+        cmd: "ssh-keygen -t ed25519 -N '' -f {{ remote_key_path }}"
+        # ^ -N '' sets an empty passphrase (no passphrase)
+        # ^ -f specifies the filename
       become_user: '{{ u_name }}'
-      community.crypto.openssh_keypair:
-        path: /home/{{ u_name }}/.ssh/id_ed25519
-        type: ed25519
-        size: 4096
-        mode: 0600
-      when: not user_ssh_key.stat.exists
-      #when: not lookup('file', '/home/' + u_name + '/.ssh/id_ed25519', errors='ignore')
+      when: not ssh_key_stat.stat.exists
+      args:
+        # Prevents logging sensitive output (like key generation progress)
+        no_log: true
       tags:
         - create-user
         - linux
-
       
 
 - name: P-4 Add User to Turing Group
