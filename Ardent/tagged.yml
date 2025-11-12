@@ -123,7 +123,7 @@
       ansible.builtin.stat:
         path: '{{ remote_key_path }}'
         #path: "/home/{{ u_name }}/.ssh/id_ed25519"
-      register: user_ssh_key
+      register: ssh_key_stat
       tags:
         - create-user
         - linux
