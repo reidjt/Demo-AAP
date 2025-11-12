@@ -165,18 +165,27 @@
         - create-user
         - linux
 
-    - name: P-3_T-5 "Set ownership and permissions on user's SSH keys"
+    - name: P-3_T-5A "Set ownership and permissions on user's SSH keys"
       ansible.builtin.file:
-        path: /home/{{ u_name }}/.ssh/id_ed25519*
+        path: "/home/{{ u_name }}/.ssh/id_ed25519"
         owner: '{{ u_name }}'
         group: '{{ u_name }}'
-        mode: "{{ '0600' if item.endswith('id_ed25519') else '0644' }}"
-      loop:
-        - /home/{{ u_name }}/.ssh/
+        mode: '0600'
       tags:
         - create-user
         - linux
 
+    - name: P-3_T-5B "Set ownership and permissions on user's SSH keys"
+      ansible.builtin.file:
+        path: "/home/{{ u_name }}/.ssh/id_ed25519.pub"
+        owner: '{{ u_name }}'
+        group: '{{ u_name }}'
+        mode: '0644'
+      tags:
+        - create-user
+        - linux
+
+        
 - name: P-4 Add User to Turing Group
   hosts: all
   become: yes
