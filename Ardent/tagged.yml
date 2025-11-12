@@ -124,7 +124,7 @@
         path: /home/{{ u_name }}/.ssh/id_ed25519
         type: ed25519
         size: 4096
-        mode: '0600'
+        mode: 0600
       when: not lookup('file', '/home/' + u_name + '/.ssh/id_ed25519', errors='ignore')
       tags:
         - create-user
