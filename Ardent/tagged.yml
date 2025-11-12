@@ -151,9 +151,9 @@
         # ^ -f specifies the filename
       #become_user: '{{ u_name }}'
       when: not ssh_key_stat.stat.exists
-      args:
+      # args:
         # Prevents logging sensitive output (like key generation progress)
-        no_log: true
+        # no_log: true
       tags:
         - create-user
         - linux
