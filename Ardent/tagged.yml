@@ -114,6 +114,7 @@
         owner: '{{ u_name }}'
         group: '{{ u_name }}'
         mode: '0700'
+      become: true
       tags:
         - create-user
         - linux
@@ -125,7 +126,12 @@
         type: ed25519
         size: 4096
         mode: 0600
-      when: not lookup('file', '/home/' + u_name + '/.ssh/id_ed25519', errors='ignore')
+      #when: not lookup('file', '/home/' + u_name + '/.ssh/id_ed25519', errors='ignore')
+      ansible.builtin.stat:
+        path: /home/{{ u_name }}/.ssh/id_ed25519
+      register: user_ssh_key
+      when: not user_ssh_key.stat.exists
+      
       tags:
         - create-user
         - linux
