@@ -109,7 +109,7 @@
 
     - name: P-3_T-3 "Ensure user has .ssh directory"
       file: 
-        directory": /home/{{ u_name }}/.ssh
+        path: /home/{{ u_name }}/.ssh
         state: directory
         owner: '{{ u_name }}'
         group: '{{ u_name }}'
