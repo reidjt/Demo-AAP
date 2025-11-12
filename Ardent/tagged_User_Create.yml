@@ -1,0 +1,493 @@
+---
+# refrence https://itsfoss.com/disable-ipv6-ubuntu-linux/
+- name: P-1 PushKeys to Linux Servers
+  hosts: all
+  become: true
+  become_method: sudo
+  become_user: root
+  vars_files:
+    - ./vars/vars.yml
+  gather_facts: yes
+  tags:
+    - push_keys
+    - linux
+
+  tasks:
+    - name: P-1_T-1 Push SSH Keys to Nodes
+      ansible.posix.authorized_key:
+        user: "{{ user_var }}"
+        state: "{{ st8 }}"
+        key: "{{ lookup('file', './james-pubkey/id_ed25519.pub') }}"
+      tags: 
+          - push_keys
+          - linux
+
+- name: P-2 "Create Turing Group"
+  hosts: all
+  become: yes
+  vars_files:
+    - ./vars/vars.yml
+  tags:
+    - turing
+    - linux
+
+  tasks:
+    - name: P-2_T-1 "Ensure turing group exists"
+      ansible.builtin.group:
+        name: "{{ grp_name_var }}"
+        state: "{{ st8 }}"
+      tags:
+        - turing
+        - linux
+
+    - name: P-2_T-1 Remove Sudoers File for group if it exists
+      ansible.builtin.file:
+        dest: /etc/sudoers.d/{{ sudoers_file_var }}
+        state: "{{ st8 }}"
+      tags:
+        - no_turing
+        - linux
+
+    - name: P-2_T-2 "Add Sudoers.d/turing file"
+      copy:
+        dest: /etc/sudoers.d/{{ sudoers_file_var }}
+        content: "%turing ALL=(ALL) NOPASSWD:ALL\n"
+        owner: root
+        group: root
+        mode: '0440'
+      tags:
+        - turing
+        - linux
+        - sudoers
+
+- name: P-3 Create User
+  hosts: all
+  become: yes
+  vars: 
+    # u-name: user
+    # st8: present
+    sudo_group_map:
+      RedHat: "wheel"
+      Debian: "sudo"
+      Suse: "wheel"
+  vars_files:
+    - ./vars/vars.yml
+    - ./vars/vault.yml
+
+  tags:
+    - create-user
+    - linux
+
+  tasks:
+    - name: P-3_T-1 "Ensure user exists"
+      ansible.builtin.user:
+        name: '{{ u_name }}'
+        shell: /bin/bash
+        state: '{{ st8 }}'
+        home: /home/{{ u_name }}
+        create_home: yes 
+      tags:
+        - create-user
+        - linux
+
+    - name: P-3_T-1A Add user to group for Sudo access
+      ansible.builtin.user:
+        name: '{{ u_name }}'
+        groups: '{{ sudo_group_map[ansible_os_family] }}'
+        append: yes
+      tags:
+        - create-user
+        - linux
+
+    - name: P-3_T-2 "Set password for user"
+      ansible.builtin.user:
+        name: '{{ u_name }}'
+        password: "{{ password_var | password_hash('sha512') }}"
+      tags:
+        - create-user
+        - linux
+
+    - name: P-3_T-3 "Ensure user has .ssh directory"
+      ansible.builtin.file: 
+        path: /home/{{ u_name }}/.ssh
+        state: directory
+        owner: '{{ u_name }}'
+        group: '{{ u_name }}'
+        mode: '0700'
+      become: true
+      tags:
+        - create-user
+        - linux
+
+    - name: P-3_T-4 "Check to see if the User has Keys"
+      ansible.builtin.stat:
+        path: '{{ remote_key_path }}'
+        #path: "/home/{{ u_name }}/.ssh/id_ed25519"
+      register: ssh_key_stat
+      tags:
+        - create-user
+        - linux
+
+    # # The following task is commented out to prevent key generation during playbook runs.
+    # # The task was commented out due to the issues with the community.crypto.openssh_keypair module.
+    - name: P-3_T-4a "Check to see if the User has Keys if not then create them"
+      # become_user: '{{ u_name }}'
+      #community.crypto.openssh_keypair:
+      ansible.builtin.openssh_keypair:
+        owner: '{{ u_name }}'
+        path: /home/{{ u_name }}/.ssh/id_ed25519
+        type: ed25519
+        mode: 0600
+      when: not ssh_key_stat.stat.exists
+      ignore_errors: true
+      tags:
+        - create-user
+        - linux
+
+    - name: P-3_T-4 "Check to see if the User has Keys"
+      ansible.builtin.stat:
+        path: '{{ remote_key_path }}'
+        #path: "/home/{{ u_name }}/.ssh/id_ed25519"
+      register: ssh_key_stat_a
+      tags:
+        - create-user
+        - linux
+
+    - name: P-3_T-4b Generate the ED25519 Keypair using ssh-keygen shell command
+      ansible.builtin.shell:
+        cmd: "ssh-keygen -t ed25519 -N '' -f {{ remote_key_path }}"
+        # ^ -N '' sets an empty passphrase (no passphrase)
+        # ^ -f specifies the filename
+      when: not ssh_key_stat_a.stat.exists
+      tags:
+        - create-user
+        - linux
+
+    - name: P-3_T-5A "Set directory permissions on .ssh directory"
+      ansible.builtin.file:
+        path: /home/{{ u_name }}/.ssh
+        owner: '{{ u_name }}'
+        group: '{{ u_name }}'
+        mode: '0700'
+      tags:
+        - create-user
+        - linux
+
+    - name: P-3_T-5B "Set ownership and permissions on user's SSH keys"
+      ansible.builtin.file:
+        path: "/home/{{ u_name }}/.ssh/id_ed25519"
+        owner: '{{ u_name }}'
+        group: '{{ u_name }}'
+        mode: '0600'
+      tags:
+        - create-user
+        - linux
+
+    - name: P-3_T-5C "Set ownership and permissions on user's SSH keys"
+      ansible.builtin.file:
+        path: "/home/{{ u_name }}/.ssh/id_ed25519.pub"
+        owner: '{{ u_name }}'
+        group: '{{ u_name }}'
+        mode: '0644'
+      tags:
+        - create-user
+        - linux
+
+
+- name: P-4 Add User to Turing Group
+  hosts: all
+  become: yes
+  vars_files:
+    - ./vars/vars.yml
+    - ./vars/vault.yml
+  vars: 
+    # u-name: user
+    # st8: present
+  tags:
+    - turing-user
+    - linux
+
+  tasks:
+    - name: P-4_T-1 "Ensure user is in turing group"
+      user:
+        name: '{{ u_name }}'
+        groups: turing
+        append: yes
+        state: '{{ st8 }}'
+      tags:
+        - turing-user
+        - linux
+
+- name: P-5 Install Linux Packages
+  hosts: all
+  become: yes
+  vars:
+    # st8: present
+    # package_list:
+    #   - git
+    #   - vim
+    #   - curl
+    #   - wget
+    #   - net-tools
+    #   - htop
+    # mapped_package_list
+    #  RedHat: httpd
+    #  Debian: apache2
+    #  Suse: apache2
+  tags:
+    - linux-packages
+    - linux
+
+  tasks:
+    - name: P-5_T-1 "Install Linux Packages"
+      ansible.builtin.package:
+        name: "{{ package_list }}"
+        state: "{{ st8 }}"
+      tags:
+        - linux-packages
+        - linux
+
+    - name: P-5_T2 Install Maped Packages"
+      ansible.builtin.package:
+        name: "{{ mapped_package_list[ansible_os_family] }}"
+        state: "{{ st8 }}"
+      tags:
+        - mapped-packages-linux
+        - linux
+
+- name: P-6 Patching and updating
+  hosts: all
+  become: yes # Needed for package management
+  gather_facts: yes # Needed to use ansible_os_family
+  tags:
+    - patching
+    - linux
+
+  tasks:
+    - name: P-6_T-1 Run safe 'apt upgrade' for Debian/Ubuntu systems
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600 # Update apt cache if older than 1 hour
+        upgrade: safe # The 'safe' upgrade option only upgrades what can be upgraded without installing new packages
+      when: ansible_os_family == 'Debian'
+      tags:
+        - patching
+        - linux
+
+    - name: P-6_T-2 Run safe 'dnf/yum/zypper update' for RHEL/SUSE systems
+      ansible.builtin.package:
+        name: '*'
+        state: latest
+      # This task works correctly for RedHat and Suse families to only update installed packages
+      when: ansible_os_family in ['RedHat', 'Suse']
+      tags:
+        - patching
+        - linux
+
+
+- name: P-7 Perform a full distribution upgrade (dist-upgrade)
+  hosts: all
+  become: yes # Needed for package management
+  gather_facts: yes # Needed to use ansible_os_family
+  tags:
+    - dist-upgrade
+    - linux
+  tasks:
+    - name: Run 'apt full-upgrade' (dist-upgrade) for Debian/Ubuntu systems
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600 # Update apt cache if older than 1 hour
+        upgrade: dist # or 'full' - they are synonyms
+      when: ansible_os_family == 'Debian'
+
+    - name: Run 'dnf/yum/zypper update' for RHEL/SUSE systems
+      # For RPM-based systems, 'state: latest' with name: '*' performs a full update
+      ansible.builtin.package:
+        name: '*'
+        state: latest
+      when: ansible_os_family in ['RedHat', 'Suse']
+
+    - name: Check if reboot is required (common after dist-upgrades, e.g. kernel updates)
+      ansible.builtin.command: needs-restarting -r
+      register: reboot_check_result
+      ignore_errors: true # The command exits with error code 1 if a reboot is needed
+      changed_when: reboot_check_result.rc == 1
+      when: ansible_os_family in ['RedHat', 'Suse']
+
+    - name: Perform a system reboot if necessary
+      ansible.builtin.reboot:
+      # Use the reboot-required file created by apt or the command result from dnf check
+      when:
+        - ansible_os_family == 'Debian' and ansible_facts['system']['lsb']['release'] == "reboot required" # Example apt check
+        - ansible_os_family in ['RedHat', 'Suse'] and reboot_check_result.rc == 1
+
+- name: P-8 OS Configureation Changes
+  hosts: all
+  become: yes
+  gather_facts: yes
+  tags:
+    - os-config
+    - linux
+
+  tasks:
+    - name: P-8_T-1 Disable IPv6 on Linux systems
+      ansible.builtin.sysctl:
+        name: net.ipv6.conf.all.disable_ipv6
+        value: '1'
+        state: present
+        reload: yes
+        sysctl_file: /etc/sysctl.conf
+      loop: 
+        - net.ipv6.conf.all.disable_ipv6
+        - net.ipv6.conf.default.disable_ipv6
+        - net.ipv6.conf.lo.disable_ipv6
+      register: sysctl_changes
+      tags:
+        - no_ip_v6
+        - os-config
+        - linux
+
+    - name: P-8_T-2 Add 'ipv6.disable=1' to grub kernel parameters
+      ansible.builtin.lineinfile: 
+        path: /etc/default/grub
+        regexp: '^GRUB_CMDLINE_LINUX="(.*)"'
+        line: 'GRUB_CMDLINE_LINUX="\1 ipv6.disable=1"'
+        backrefs: yes
+      register: grub_update_result
+      tags:
+        - no_ip_v6
+        - os-config
+        - linux
+
+    - name: P-8_T-3 Update grub configuration if modified (RHEL/CENTOS/SUSE)
+      ansible.builtin.command: grub2-mkconfig -o /boot/grub2/grub.cfg
+      when: grub_update_result.changed and ansible_os_family in ['RedHat', 'Suse']
+      changed_when: true
+      tags:
+        - no_ip_v6
+        - os-config
+        - linux
+
+    - name: P-8_T-4 Update grub configuration if modified (Debian/Ubuntu)
+      ansible.builtin.command: update-grub
+      when: grub_update_result.changed and ansible_os_family == 'Debian'
+      changed_when: true
+      tags:
+        - no_ip_v6
+        - os-config
+        - linux
+    
+    - name: P-8_T-5 Reboot if grub was updated
+      ansible.builtin.reboot:
+      when: sysctl_changes.changed or grub_update_result.changed
+      tags:
+        - no_ip_v6
+        - os-config
+        - linux
+
+- name: P-9 disable GUI interface on Linux Servers
+  hosts: all
+  become: yes
+  gather_facts: yes
+  tags:
+    - disable-gui
+    - linux
+  vars:
+    # Set this variable to 'graphical' or 'multi-user'
+    boot_mode: "multi-user"
+
+  tasks:
+    - name: P-9_T1 Construct the full target name
+      ansible.builtin.set_fact:
+        desired_target: "{{ boot_mode }}.target"
+      
+    - name: P-9_T2 Ensure the desired target is the default boot target
+      ansible.builtin.file:
+        # Source link location is universal for systemd units
+        src: /usr/lib/systemd/system/{{ desired_target }}
+        # Destination link location is universal for systemd default target
+        dest: /etc/systemd/system/default.target
+        owner: root
+        group: root
+        state: link
+        force: yes
+
+    - name: P-9_T3 Reboot to apply the new boot target
+      ansible.builtin.reboot:
+      when: ansible_facts['systemd']['default_target'] != desired_target
+
+- name: P-10 enable GUI interface on Linux Servers
+  hosts: all
+  become: yes
+  gather_facts: yes
+  tags:
+    - enable-gui
+    - linux
+  vars:
+    # Set this variable to 'graphical' or 'multi-user'
+    boot_mode: "graphical"
+
+  tasks:
+    - name: P-10_T1 Construct the full target name
+      ansible.builtin.set_fact:
+        desired_target: "{{ boot_mode }}.target"
+      
+    - name: P-10_T2 Ensure the desired target is the default boot target
+      ansible.builtin.file:
+        # Source link location is universal for systemd units
+        src: /usr/lib/systemd/system/{{ desired_target }}
+        # Destination link location is universal for systemd default target
+        dest: /etc/systemd/system/default.target
+        owner: root
+        group: root
+        state: link
+        force: yes
+    - name: P-10_T3 Reboot to apply the new boot target
+      ansible.builtin.reboot:
+      when: ansible_facts['systemd']['default_target'] != desired_target
+
+- name: P-11 Re Enable IPv6 on Linux systems
+  hosts: all
+  become: yes # Needed for root-level file management and sysctl changes
+  gather_facts: yes
+  tags:
+    - enable-ipv6
+    - linux
+  tasks:
+    - name: P-11_T1 Ensure IPv6 is enabled in /etc/sysctl.conf (set values to 0)
+      ansible.builtin.sysctl:
+        name: "{{ item }}"
+        value: '0' # Set to 0 to enable IPv6
+        state: present
+        reload: yes # Apply the setting immediately after making the change
+        sysctl_file: /etc/sysctl.conf
+      loop:
+        - net.ipv6.conf.all.disable_ipv6
+        - net.ipv6.conf.default.disable_ipv6
+        - net.ipv6.conf.lo.disable_ipv6
+      register: sysctl_changes
+
+    - name: P-11_T2 Remove 'ipv6.disable=1' from the GRUB kernel command line
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        # Use absent state to ensure the pattern is completely removed from the line
+        regexp: 'ipv6.disable=1'
+        state: absent
+      register: grub_change
+
+    - name: P-11_T3 Update the GRUB configuration file (RHEL/CentOS/SUSE)
+      ansible.builtin.command: grub2-mkconfig -o /boot/grub2/grub.cfg
+      when: ansible_os_family in ['RedHat', 'Suse'] and grub_change.changed
+      changed_when: true
+
+    - name: P-11_T4 Update the GRUB configuration file (Debian/Ubuntu)
+      ansible.builtin.command: update-grub
+      when: ansible_os_family == 'Debian' and grub_change.changed
+      changed_when: true
+
+    - name: P-11_T5 Reboot the systems to apply all kernel/sysctl changes
+      ansible.builtin.reboot:
+        reboot_timeout: 600
+      # Only reboot if either the sysctl or grub configuration actually changed
+      when: sysctl_changes.changed or grub_change.changed
+...
