@@ -119,6 +119,13 @@
         - create-user
         - linux
 
+      ansible.builtin.stat:
+        path: /home/{{ u_name }}/.ssh/id_ed25519
+      register: user_ssh_key
+      tags:
+        - create-user
+        - linux
+
     - name: P-3_T-4 "Check to see if the User has Keys if not then create them"
       become_user: '{{ u_name }}'
       community.crypto.openssh_keypair:
@@ -126,15 +133,13 @@
         type: ed25519
         size: 4096
         mode: 0600
-      #when: not lookup('file', '/home/' + u_name + '/.ssh/id_ed25519', errors='ignore')
-      ansible.builtin.stat:
-        path: /home/{{ u_name }}/.ssh/id_ed25519
-      register: user_ssh_key
       when: not user_ssh_key.stat.exists
-      
+      #when: not lookup('file', '/home/' + u_name + '/.ssh/id_ed25519', errors='ignore')
       tags:
         - create-user
         - linux
+
+      
 
 - name: P-4 Add User to Turing Group
   hosts: all
