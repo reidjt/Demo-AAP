@@ -120,7 +120,7 @@
 
     - name: P-3_T-4 "Check to see if the User has Keys if not then create them"
       become_user: '{{ u_name }}'
-      comunity.crypto.openssh_keypair:
+      community.crypto.openssh_keypair:
         path: /home/{{ u_name }}/.ssh/id_ed25519
         type: ed25519
         size: 4096
