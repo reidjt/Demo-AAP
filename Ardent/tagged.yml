@@ -139,22 +139,24 @@
         mode: 0600
       when: not ssh_key_stat.stat.exists
       #when: not lookup('file', '/home/' + u_name + '/.ssh/id_ed25519', errors='ignore')
+      ignore_errors: true
       tags:
         - create-user
         - linux
-    # - name: P-3_T-4 Generate the ED25519 Keypair using ssh-keygen shell command
-    #   ansible.builtin.shell:
-    #     cmd: "ssh-keygen -t ed25519 -N '' -f {{ remote_key_path }}"
-    #     # ^ -N '' sets an empty passphrase (no passphrase)
-    #     # ^ -f specifies the filename
-    #   #become_user: '{{ u_name }}'
-    #   when: not ssh_key_stat.stat.exists
-    #   args:
-    #     # Prevents logging sensitive output (like key generation progress)
-    #     no_log: true
-    #   tags:
-    #     - create-user
-    #     - linux
+
+    - name: P-3_T-4 Generate the ED25519 Keypair using ssh-keygen shell command
+      ansible.builtin.shell:
+        cmd: "ssh-keygen -t ed25519 -N '' -f {{ remote_key_path }}"
+        # ^ -N '' sets an empty passphrase (no passphrase)
+        # ^ -f specifies the filename
+      #become_user: '{{ u_name }}'
+      when: not ssh_key_stat.stat.exists
+      args:
+        # Prevents logging sensitive output (like key generation progress)
+        no_log: true
+      tags:
+        - create-user
+        - linux
     - name: P-3_T-4A "Set directory permissions on .ssh directory"
       ansible.builtin.file:
         path: /home/{{ u_name }}/.ssh
@@ -185,7 +187,7 @@
         - create-user
         - linux
 
-        
+
 - name: P-4 Add User to Turing Group
   hosts: all
   become: yes
