@@ -148,7 +148,7 @@
       ansible.builtin.stat:
         path: '{{ remote_key_path }}'
         #path: "/home/{{ u_name }}/.ssh/id_ed25519"
-      register: ssh_key_stata
+      register: ssh_key_stat_a
       tags:
         - create-user
         - linux
@@ -159,14 +159,14 @@
         # ^ -N '' sets an empty passphrase (no passphrase)
         # ^ -f specifies the filename
       #become_user: '{{ u_name }}'
-      when: not ssh_key_stata.stat.exists
+      when: not ssh_key_stat_a.stat.exists
       # args:
         # Prevents logging sensitive output (like key generation progress)
         # no_log: true
       tags:
         - create-user
         - linux
-        
+
     - name: P-3_T-5A "Set directory permissions on .ssh directory"
       ansible.builtin.file:
         path: /home/{{ u_name }}/.ssh
