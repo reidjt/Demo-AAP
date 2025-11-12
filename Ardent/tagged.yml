@@ -121,7 +121,7 @@
 
     - name: P-3_T-4 "Check to see if the User has Keys"
       ansible.builtin.stat:
-      path: "{{ remote_key_path }}"
+      path: '{{ remote_key_path }}'
         #path: "/home/{{ u_name }}/.ssh/id_ed25519"
       register: user_ssh_key
       tags:
