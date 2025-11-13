@@ -8,7 +8,7 @@ dependencies:
   system:
     - python3-pip
   python:
-    - dumb-init==1.2.5
+    - requirements.txt
 
 additional_build_files:
   - src: files/ansible.cfg
