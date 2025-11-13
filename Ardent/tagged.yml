@@ -456,7 +456,7 @@
   tasks:
     - name: P-11_T1 Ensure IPv6 is enabled in /etc/sysctl.conf (set values to 0)
       ansible.builtin.sysctl:
-        name: "{{ item }}"
+        name: '{{ item }}'
         value: '0' # Set to 0 to enable IPv6
         state: present
         reload: yes # Apply the setting immediately after making the change
