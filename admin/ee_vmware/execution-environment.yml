@@ -7,8 +7,7 @@ dependencies:
   galaxy: requirements.yml
   system:
     - python3-pip
-  python:
-    - requirements.txt
+  python: requirements.txt
 
 additional_build_files:
   - src: files/ansible.cfg

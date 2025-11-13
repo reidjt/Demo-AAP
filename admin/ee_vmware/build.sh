@@ -10,7 +10,7 @@
 # skopeo inspect docker://aap262.lan/ee_name:latest
 
 #4. run ansible builder to build the EE
-ansible-builder build -f execution-environment.yml --tag ee_vmware:latest
+ansible-builder build -f execution-environment.yml --tag aap261.lan/ee_vmware:latest
 
 
 # check that the collections are there.
