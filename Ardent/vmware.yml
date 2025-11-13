@@ -2,7 +2,7 @@
 # VMware Specific Playbook
 - name: VMWare controls for AAP Demo Environment
   #hosts: vmware_hosts
-  hosts: all
+  hosts: localhost
   gather_facts: yes
   become: yes
   tags:
@@ -22,10 +22,12 @@
         validate_certs: no
         datacenter: "{{ vcenter_datacenter }}"
         folder: "{{ vcenter_folder }}"
-        name: "{{ inventory_hostname }}"
+        #name: "{{ inventory_hostname }}"
+        name: '{{ item }}'
         snapshot_name: "{{ vm_snapshot_name }}"
         state: reverted
       delegate_to: localhost
+      loop: "{{ groups['all'] }}"      
       tags:
         - vmware
 
