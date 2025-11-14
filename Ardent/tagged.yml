@@ -350,7 +350,7 @@
       # Your existing targeting logic applied here
       when: (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
       tags: 
-        - always # Ensure this runs even if specific tags are used
+    #    - always # Ensure this runs even if specific tags are used
         - os-config
         - linux
     
