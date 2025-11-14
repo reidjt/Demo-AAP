@@ -1,5 +1,5 @@
 #!/bin/bash
-
+git pull;
 # 1. Log in to the local registry
 # podman login -u admin -p redhat aap262.lan 
 
