@@ -340,6 +340,9 @@
         - always # Ensure this runs even if specific tags are used
         - os-config
         - linux
+        - gather-facts
+        - no_ip_v6
+        
     # --- Pre-Check Task ---
     - name: Check if IPv6 is already disabled
       ansible.builtin.set_fact:
