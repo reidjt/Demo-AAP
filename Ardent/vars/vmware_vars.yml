@@ -3,3 +3,9 @@ vcenter_username: "administrator@vsphere.lan"
 vcenter_datacenter: "vc2"
 vcenter_folder: "vm"
 vm_snapshot_name: "VM_Snapshot"
+
+#--GovC Credentials--
+vmware_user: "administrator@vsphere.lan"
+vmware_pass: "NINja600r!"
+vmware_host: "vcenter2.lan"
+vmware_datacenter: "vc2"

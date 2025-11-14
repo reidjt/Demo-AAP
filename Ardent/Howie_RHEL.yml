@@ -1,0 +1,39 @@
+---
+- name: Howies Play book to update rhel9
+  hosts: rhel9_hosts
+  gather_facts: yes
+  become: yes
+  tags:
+    - howie
+  vars:
+
+  vars_files:
+    - vars/howie_vars.yml
+    - vars/vault.yml
+  
+  tasks:
+    - name: A Block for Howine
+      block:
+       
+        - name: P1_T1 Update all packages on RHEL5-6 Systems
+          ansible.builtin.yum:
+            name: '*'
+            state: latest
+          tags:
+            - howie
+
+        - name: P-1_T-2 update all rhel 7-10 servers using dnf module
+          ansible.builtin.dnf:
+            name: '*'
+            state: latest
+          tags:
+            - howie
+
+        - name: update all the servers using packages module apt, zypper, etc
+          ansible.builtin.package:
+            name: '*'
+            state: latest
+          tags:
+            - howie
+
+    

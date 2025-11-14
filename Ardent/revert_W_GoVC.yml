@@ -1,0 +1,52 @@
+---
+- name: Revert VMware guests to their latest snapshot using govc
+  hosts: all
+  gather_facts: false
+  
+  vars_files:
+    - vars/vmware_vars.yml
+    - vault.yml
+    - vars/vm_list.yml
+  vars:
+    # # Define your vCenter credentials and connection details here or use environment variables
+    # # govc automatically uses these environment variables for connection
+    # vmware_user: "your_vc_username"
+    # vmware_pass: "your_vc_password"
+    # vmware_host: "your_vc_fqdn_or_ip"
+    # vmware_datacenter: "your_datacenter_name"
+    # vm_names:
+    #   - "vm_name_1"
+    #   - "vm_name_2"
+      # Add all the VM names you want to revert
+
+  tasks:
+    - name: Set govc environment variables for the current session
+      ansible.builtin.set_fact:
+        # Note: In a production setting, use a secure way to manage credentials (e.g., Ansible Vault)
+        # govc looks for specific environment variable names
+        GOVC_USERNAME: "{{ vmware_user }}"
+        GOVC_PASSWORD: "{{ vmware_pass }}"
+        GOVC_URL: "{{ vmware_host }}"
+        GOVC_DATACENTER: "{{ vmware_datacenter }}"
+        GOVC_INSECURE: "1" # Set to "1" to ignore SSL certificate warnings
+
+    - name: Revert each VM to its latest snapshot using govc
+      ansible.builtin.command:
+        # The command to revert to the "current" snapshot (which is the latest by default in the UI context)
+        cmd: "govc snapshot.revert -vm {{ item }}"
+      environment:
+        # Pass the environment variables to the command task
+        GOVC_USERNAME: "{{ GOVC_USERNAME }}"
+        GOVC_PASSWORD: "{{ GOVC_PASSWORD }}"
+        GOVC_URL: "{{ GOVC_URL }}"
+        GOVC_DATACENTER: "{{ GOVC_DATACENTER }}"
+        GOVC_INSECURE: "{{ GOVC_INSECURE }}"
+      loop: "{{ vm_names }}"
+      register: govc_revert_output
+      changed_when: govc_revert_output.rc == 0
+      # Reverting a VM will power it off if the snapshot didn't include memory state
+      # You might want to add a task to power it back on afterwards if needed.
+
+    - name: Display command output
+      ansible.builtin.debug:
+        var: govc_revert_output
