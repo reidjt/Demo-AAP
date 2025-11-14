@@ -219,10 +219,11 @@
         groups: turing
         append: yes
         state: '{{ st8 }}'
+      when: st8 == 'present'
       tags:
         - turing-user
         - linux
-        
+
     - name: P-4_T-2 Remove User from turing group
       ansible.builtin.command:
         cmd: "gpasswd -d {{ u_name }} turing"
