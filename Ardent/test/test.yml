@@ -1,0 +1,23 @@
+---
+- name: Verify PyVmomi availability in the environment
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Attempt to import pyVim (part of PyVmomi) library
+      # This runs a simple Python command to try and import the module
+      ansible.builtin.command: python3 -c "import pyVim.connect; print('PyVmomi successfully imported')"
+      register: import_status
+      # Using 'ignore_errors: true' so the playbook continues if the import fails, 
+      # allowing us to inspect the failure details.
+      ignore_errors: true
+
+    - name: Display import results (Success or Failure message)
+      ansible.builtin.debug:
+        msg: "{{ import_status.stdout | default(import_status.stderr) }}"
+
+    - name: Fail the playbook if the import failed
+      ansible.builtin.fail:
+        msg: "PyVmomi library is NOT available in this environment. Check EE configuration."
+      when: import_status.rc != 0
