@@ -354,6 +354,14 @@
         - os-config
         - linux
     
+    - name: Debug IPv6 status
+      ansible.builtin.debug:
+        msg: "IPv6 is already disabled: {{ ipv6_already_disabled }}"
+      when: (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
+      tags:
+        - os-config
+        - linux
+        - no_ip_v6
 
 
     # --- Configuration Tasks ---
