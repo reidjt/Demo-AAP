@@ -5,7 +5,6 @@
   become: true
   become_method: sudo
   become_user: root
-  limit: "{{ target_host | default('all') }}"
   vars_files:
     - ./vars/vars.yml
   gather_facts: yes
@@ -26,7 +25,6 @@
 - name: P-2 "Create Turing Group"
   hosts: all
   become: yes
-  limit: "{{ target_host | default('all') }}"
   vars_files:
     - ./vars/vars.yml
   tags:
@@ -65,7 +63,6 @@
 - name: P-3 Create User
   hosts: all
   become: yes
-  limit: "{{ target_host | default('all') }}"
   vars: 
     # u-name: user
     # st8: present
@@ -200,7 +197,6 @@
 - name: P-4 Add User to Turing Group
   hosts: all
   become: yes
-  limit: "{{ target_host | default('all') }}"
   vars_files:
     - ./vars/vars.yml
     - ./vars/vault.yml
@@ -225,7 +221,6 @@
 - name: P-5 Install Linux Packages
   hosts: all
   become: yes
-  limit: "{{ target_host | default('all') }}"
   vars:
     # st8: present
     # package_list:
@@ -264,7 +259,6 @@
   hosts: all
   become: yes # Needed for package management
   gather_facts: yes # Needed to use ansible_os_family
-  limit: "{{ target_host | default('all') }}" 
   tags:
     - patching
     - linux
@@ -294,7 +288,6 @@
 - name: P-7 Perform a full distribution upgrade (dist-upgrade)
   hosts: all
   become: yes # Needed for package management
-  limit: "{{ target_host | default('all') }}"
   gather_facts: yes # Needed to use ansible_os_family
   tags:
     - dist-upgrade
@@ -331,7 +324,6 @@
 - name: P-8 OS Configureation Changes
   hosts: all
   become: yes
-  limit: "{{ target_host | default('all') }}"
   gather_facts: yes
   # Using the limit parameter to target specific hosts if needed refrence extra var target_host.
   tags:
@@ -346,6 +338,7 @@
         state: present
         reload: yes
         sysctl_file: /etc/sysctl.conf
+      when: (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
       loop: 
         - net.ipv6.conf.all.disable_ipv6
         - net.ipv6.conf.default.disable_ipv6
@@ -362,6 +355,7 @@
         regexp: '^GRUB_CMDLINE_LINUX="(.*)"'
         line: 'GRUB_CMDLINE_LINUX="\1 ipv6.disable=1"'
         backrefs: yes
+      when: (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
       register: grub_update_result
       tags:
         - no_ip_v6
@@ -370,7 +364,9 @@
 
     - name: P-8_T-3 Update grub configuration if modified (RHEL/CENTOS/SUSE)
       ansible.builtin.command: grub2-mkconfig -o /boot/grub2/grub.cfg
-      when: grub_update_result.changed and ansible_os_family in ['RedHat', 'Suse']
+      when: >
+        grub_update_result.changed and ansible_os_family in ['RedHat', 'Suse'] and
+        (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
       changed_when: true
       tags:
         - no_ip_v6
@@ -397,7 +393,6 @@
 - name: P-9 disable GUI interface on Linux Servers
   hosts: all
   become: yes
-  limit: "{{ target_host | default('all') }}"
   gather_facts: yes
   tags:
     - disable-gui
@@ -429,7 +424,6 @@
 - name: P-10 enable GUI interface on Linux Servers
   hosts: all
   become: yes
-  limit: "{{ target_host | default('all') }}"
   gather_facts: yes
   tags:
     - enable-gui
@@ -460,7 +454,6 @@
 - name: P-11 Re Enable IPv6 on Linux systems
   hosts: all
   become: yes # Needed for root-level file management and sysctl changes
-  limit: "{{ target_host | default('all') }}"
   gather_facts: yes
   tags:
     - enable-ipv6
