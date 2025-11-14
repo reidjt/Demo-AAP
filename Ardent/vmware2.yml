@@ -5,7 +5,8 @@
   gather_facts: false
   # Load VM list and vCenter credentials
   vars_files:
-    - vars/vcenter_credentials.yml
+    - vars/vmware_vars.yml
+    - vault.yml
     - vars/vm_list.yml
 
   tasks:
@@ -16,9 +17,9 @@
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_user }}"
         password: "{{ vcenter_password }}"
-        datacenter: "YourDatacenterName" # <-- Replace with your actual datacenter name
+        datacenter: "{{ vcenter_datacenter }}" # <-- Replace with your actual datacenter name
         name: "{{ item }}"               # <-- 'item' will be each VM name from the list
-        snapshot_name: "pre_update_snapshot" # <-- The snapshot name
+        snapshot_name: "{{ vm_snapshot_name }}" # <-- The snapshot name
         state: revert
         validate_certs: false
       delegate_to: localhost
