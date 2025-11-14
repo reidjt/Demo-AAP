@@ -357,77 +357,78 @@
 
 
     # --- Configuration Tasks ---
+    - name: block for IPv^ config tasks
+      when: (target_host | default('all') == "all") or (inventory_hostname == target_host | default('none'))
 
-    - name: P-8_T-1 Disable IPv6 on Linux systems
-      ansible.builtin.sysctl:
-        name: "{{ item }}"
-        value: '1'
-        state: present
-        reload: yes
-        sysctl_file: /etc/sysctl.conf
-      register: sysctl_changes
-      loop: 
-        - net.ipv6.conf.all.disable_ipv6
-        - net.ipv6.conf.default.disable_ipv6
-        - net.ipv6.conf.lo.disable_ipv6
-      when: 
-        # Only run if IPv6 is NOT already disabled
-        - not ipv6_already_disabled 
-        # Your existing targeting logic
-        - (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
-      tags:
-        - no_ip_v6
-        - os-config
-        - linux
+      block:
+      
+      - name: P-8_T-1 Disable IPv6 on Linux systems
+        ansible.builtin.sysctl:
+          name: "{{ item }}"
+          value: '1'
+          state: present
+          reload: yes
+          sysctl_file: /etc/sysctl.conf
+        register: sysctl_changes
+        loop: 
+          - net.ipv6.conf.all.disable_ipv6
+          - net.ipv6.conf.default.disable_ipv6
+          - net.ipv6.conf.lo.disable_ipv6
+        when: 
+          # Only run if IPv6 is NOT already disabled
+          - not ipv6_already_disabled 
+          # Your existing targeting logic
+          - (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
+        tags:
+          - no_ip_v6
+          - os-config
+          - linux
 
-    - name: P-8_T-2 Add 'ipv6.disable=1' to grub kernel parameters
-      ansible.builtin.lineinfile: 
-        path: /etc/default/grub
-        regexp: '^GRUB_CMDLINE_LINUX="(.*)"'
-        line: 'GRUB_CMDLINE_LINUX="\1 ipv6.disable=1"'
-        backrefs: yes
-      register: grub_update_result
-      when: 
-        # Only run if IPv6 is NOT already disabled
-        - not ipv6_already_disabled
-        # Your existing targeting logic
-        - (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
-      tags:
-        - no_ip_v6
-        - os-config
-        - linux
+      - name: P-8_T-2 Add 'ipv6.disable=1' to grub kernel parameters
+        ansible.builtin.lineinfile: 
+          path: /etc/default/grub
+          regexp: '^GRUB_CMDLINE_LINUX="(.*)"'
+          line: 'GRUB_CMDLINE_LINUX="\1 ipv6.disable=1"'
+          backrefs: yes
+        register: grub_update_result
+        # when: 
+        #   # Only run if IPv6 is NOT already disabled
+        #   - not ipv6_already_disabled
+        #   # Your existing targeting logic
+        #   - (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
+        tags:
+          - no_ip_v6
+          - os-config
+          - linux
 
-    - name: P-8_T-3 Update grub configuration if modified (RHEL/CENTOS/SUSE)
-      ansible.builtin.command: grub2-mkconfig -o /boot/grub2/grub.cfg
-      changed_when: true
-      when: 
-        - grub_update_result.changed 
-        - ansible_os_family in ['RedHat', 'Suse']
-        - ( (target_host | default('all')) == "all" or (inventory_hostname == (target_host | default('none'))) )
-      tags:
-        - no_ip_v6
-        - os-config
-        - linux
+      - name: P-8_T-3 Update grub configuration if modified (RHEL/CENTOS/SUSE)
+        ansible.builtin.command: grub2-mkconfig -o /boot/grub2/grub.cfg
+        changed_when: true
+        when: grub_update_result.changed and ansible_os_family in ['RedHat', 'Suse']
+        tags:
+          - no_ip_v6
+          - os-config
+          - linux
 
-    - name: P-8_T-4 Update grub configuration if modified (Debian/Ubuntu)
-      ansible.builtin.command: update-grub
-      changed_when: true
-      when: 
-        - grub_update_result.changed and ansible_os_family == 'Debian'
-        - (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
-      tags:
-        - no_ip_v6
-        - os-config
-        - linux
+      - name: P-8_T-4 Update grub configuration if modified (Debian/Ubuntu)
+        ansible.builtin.command: update-grub
+        changed_when: true
+        when: 
+          - grub_update_result.changed and ansible_os_family == 'Debian'
+          - (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
+        tags:
+          - no_ip_v6
+          - os-config
+          - linux
     
-    - name: P-8_T-5 Reboot if configuration was changed
-      ansible.builtin.reboot:
-      # Use the logical OR operator for the final check
-      when: sysctl_changes.changed or grub_update_result.changed
-      tags:
-        - no_ip_v6
-        - os-config
-        - linux
+      - name: P-8_T-5 Reboot if configuration was changed
+        ansible.builtin.reboot:
+        # Use the logical OR operator for the final check
+        when: sysctl_changes.changed or grub_update_result.changed
+        tags:
+          - no_ip_v6
+          - os-config
+          - linux
   ##--End New AI P-8 Tasks-----------
   ##----P-8 Begin Origonal P-8- Tasks-----------
     - name: P-8_T-1 Disable IPv6 on Linux systems
