@@ -125,9 +125,9 @@
           path: '{{ remote_key_path }}'
           #path: "/home/{{ u_name }}/.ssh/id_ed25519"
         register: ssh_key_stat
-        tags:
-          - create-user
-          - linux
+        # tags:
+        #   - create-user
+        #   - linux
 
       # # The following task is commented out to prevent key generation during playbook runs.
       # # The task was commented out due to the issues with the community.crypto.openssh_keypair module.
@@ -141,10 +141,12 @@
           mode: 0600
         when: not ssh_key_stat.stat.exists
         ignore_errors: true
-        tags:
+        # tags:
+        #   - create-user
+        #   - linux
+      tags:
           - create-user
-          - linux
-          
+          - linux   
       rescue:
 
       - name: P-3_T-4 "Check to see if the User has Keys"
