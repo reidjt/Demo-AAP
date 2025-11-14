@@ -346,7 +346,7 @@
     # --- Pre-Check Task ---
     - name: Check if IPv6 is already disabled
       ansible.builtin.set_fact:
-        ipv6_already_disabled: "{{ ansible_all_ipv6 | length == 0 }}"
+        ipv6_already_disabled: "{{ ansible_all_ipv6 |default([]) | length == 0 }}"
       # Your existing targeting logic applied here
       when: (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
       tags: 
