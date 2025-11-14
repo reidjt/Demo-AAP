@@ -222,6 +222,11 @@
       tags:
         - turing-user
         - linux
+        
+    - name: P-4_T-2 Remove User from turing group
+      ansible.builtin.command:
+        cmd: "gpasswd -d {{ u_name }} turing"
+      when: st8 == 'absent' 
 
 - name: P-5 Install Linux Packages
   hosts: all
