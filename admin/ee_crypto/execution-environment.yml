@@ -9,6 +9,7 @@ dependencies:
     - python3-pip
   python:
     - dumb-init==1.2.5
+    - pyvmomi
 
 additional_build_files:
   - src: files/ansible.cfg

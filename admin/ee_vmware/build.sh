@@ -10,7 +10,7 @@
 # skopeo inspect docker://aap262.lan/ee_name:latest
 
 #4. run ansible builder to build the EE
-ansible-builder build -f execution-environment.yml --tag aap261.lan/ee_vmware:latest
+ansible-builder build -f execution-environment.yml --tag aap261.lan/ee-vmware:v2.0
 
 
 # check that the collections are there.
@@ -29,3 +29,6 @@ podman build -f execution-environment -t ee_name:latest
 
 #4. Push the image to the Private Automation Hub Registry
 # podman push ee_name:latest aap262.lan/ee_name:latest
+
+# verify that a new image has the needed packages
+podman run --rm aap261.lan/ee-vmware:v2.0 sh -c "pip list | grep pyvmomi"
