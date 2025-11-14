@@ -223,6 +223,25 @@
       tags:
         - turing-user
         - linux
+    
+    # - name: block to remove a user from a group
+    #   block:
+
+    #     - name: P-4_T-2A Check if user is in turing group
+    #       ansible.builtin.command:
+    #         cmd: "id -nG {{ u_name }}"
+    #       register: user_groups
+    #       changed_when: false
+
+    #     - name: P-4_T2B Print the users current groups
+    #       ansible.builtin.debug:
+    #         msg: "User {{ u_name }} is in groups: {{ user_groups.stdout }}"
+
+    #     - name: P-4_T-2C Remove user from turing group if they are a member
+    #       ansible.builtin.command:
+    #         cmd: "gpasswd -d {{ u_name }} turing"
+    #       when: "'turing' in user_groups.stdout.split()"
+    #   when: st8 == 'absent'
 
     - name: P-4_T-2 Remove User from turing group
       ansible.builtin.command:
