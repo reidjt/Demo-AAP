@@ -431,66 +431,66 @@
           - linux
   ##--End New AI P-8 Tasks-----------
   ##----P-8 Begin Origonal P-8- Tasks-----------
-    - name: P-8_T-1 Disable IPv6 on Linux systems
-      ansible.builtin.sysctl:
-        name: net.ipv6.conf.all.disable_ipv6
-        value: '1'
-        state: present
-        reload: yes
-        sysctl_file: /etc/sysctl.conf
-      when: (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
-      loop: 
-        - net.ipv6.conf.all.disable_ipv6
-        - net.ipv6.conf.default.disable_ipv6
-        - net.ipv6.conf.lo.disable_ipv6
-      register: sysctl_changes
-      tags:
-        - no_ip_v6
-        - os-config
-        - linux
+    # - name: P-8_T-1 Disable IPv6 on Linux systems
+    #   ansible.builtin.sysctl:
+    #     name: net.ipv6.conf.all.disable_ipv6
+    #     value: '1'
+    #     state: present
+    #     reload: yes
+    #     sysctl_file: /etc/sysctl.conf
+    #   when: (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
+    #   loop: 
+    #     - net.ipv6.conf.all.disable_ipv6
+    #     - net.ipv6.conf.default.disable_ipv6
+    #     - net.ipv6.conf.lo.disable_ipv6
+    #   register: sysctl_changes
+    #   tags:
+    #     - no_ip_v6
+    #     - os-config
+    #     - linux
 
-    - name: P-8_T-2 Add 'ipv6.disable=1' to grub kernel parameters
-      ansible.builtin.lineinfile: 
-        path: /etc/default/grub
-        regexp: '^GRUB_CMDLINE_LINUX="(.*)"'
-        line: 'GRUB_CMDLINE_LINUX="\1 ipv6.disable=1"'
-        backrefs: yes
-      when: (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
-      register: grub_update_result
-      tags:
-        - no_ip_v6
-        - os-config
-        - linux
+    # - name: P-8_T-2 Add 'ipv6.disable=1' to grub kernel parameters
+    #   ansible.builtin.lineinfile: 
+    #     path: /etc/default/grub
+    #     regexp: '^GRUB_CMDLINE_LINUX="(.*)"'
+    #     line: 'GRUB_CMDLINE_LINUX="\1 ipv6.disable=1"'
+    #     backrefs: yes
+    #   when: (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
+    #   register: grub_update_result
+    #   tags:
+    #     - no_ip_v6
+    #     - os-config
+    #     - linux
 
-    - name: P-8_T-3 Update grub configuration if modified (RHEL/CENTOS/SUSE)
-      ansible.builtin.command: grub2-mkconfig -o /boot/grub2/grub.cfg
-      when: >
-        - grub_update_result.changed and ansible_os_family in ['RedHat', 'Suse']
-        - (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
-      changed_when: true
-      tags:
-        - no_ip_v6
-        - os-config
-        - linux
+    # - name: P-8_T-3 Update grub configuration if modified (RHEL/CENTOS/SUSE)
+    #   ansible.builtin.command: grub2-mkconfig -o /boot/grub2/grub.cfg
+    #   when: >
+    #     - grub_update_result.changed and ansible_os_family in ['RedHat', 'Suse']
+    #     - (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
+    #   changed_when: true
+    #   tags:
+    #     - no_ip_v6
+    #     - os-config
+    #     - linux
 
-    - name: P-8_T-4 Update grub configuration if modified (Debian/Ubuntu)
-      ansible.builtin.command: update-grub
-      when: 
-        - grub_update_result.changed and ansible_os_family == 'Debian'
-        - (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
-      changed_when: true
-      tags:
-        - no_ip_v6
-        - os-config
-        - linux
+    # - name: P-8_T-4 Update grub configuration if modified (Debian/Ubuntu)
+    #   ansible.builtin.command: update-grub
+    #   when: 
+    #     - grub_update_result.changed and ansible_os_family == 'Debian'
+    #     - (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
+    #   changed_when: true
+    #   tags:
+    #     - no_ip_v6
+    #     - os-config
+    #     - linux
     
-    - name: P-8_T-5 Reboot if grub was updated
-      ansible.builtin.reboot:
-      when: sysctl_changes.changed or grub_update_result.changed
-      tags:
-        - no_ip_v6
-        - os-config
-        - linux
+    # - name: P-8_T-5 Reboot if grub was updated
+    #   ansible.builtin.reboot:
+    #   when: sysctl_changes.changed or grub_update_result.changed
+    #   tags:
+    #     - no_ip_v6
+    #     - os-config
+    #     - linux
 ##----P-8 End Origonal P-8- Tasks-----------
 
 - name: P-9 disable GUI interface on Linux Servers
