@@ -11,7 +11,9 @@
 
 
 # Build script for Ansible Execution Environment: ee_name
-podman build -f execution-environment -t ee_name:latest
+ansible-builder build --tag aap261.lan/admin/ee-crypto:latest;
+
+
 
 #4. Push the image to the Private Automation Hub Registry
-# podman push ee_name:latest aap262.lan/ee_name:latest
+podman push ee_name:latest aap261.lan/admin/ee-crypto:latest
