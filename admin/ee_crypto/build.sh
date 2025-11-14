@@ -16,4 +16,4 @@ ansible-builder build --tag aap261.lan/admin/ee-crypto:latest;
 
 
 #4. Push the image to the Private Automation Hub Registry
-podman push ee_name:latest aap261.lan/admin/ee-crypto:latest
+podman push ee-name:latest aap261.lan/admin/ee-crypto:latest
