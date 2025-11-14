@@ -1,0 +1,31 @@
+---
+- name: Revert list of servers to a specific snapshot
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  # Load VM list and vCenter credentials
+  vars_files:
+    - vars/vcenter_credentials.yml
+    - vars/vm_list.yml
+
+  tasks:
+    - name: Revert each VM to the 'pre_update_snapshot' snapshot
+      # We can use either the community or the certified module now
+      community.vmware.vmware_guest_snapshot:
+      # Or the certified module if you prefer: vmware.vmware.vm_snapshot:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_user }}"
+        password: "{{ vcenter_password }}"
+        datacenter: "YourDatacenterName" # <-- Replace with your actual datacenter name
+        name: "{{ item }}"               # <-- 'item' will be each VM name from the list
+        snapshot_name: "pre_update_snapshot" # <-- The snapshot name
+        state: revert
+        validate_certs: false
+      delegate_to: localhost
+      # Loop through the list variable defined in vars/vm_list.yml
+      loop: "{{ vms_to_revert }}"
+      register: snapshot_revert_results
+    
+    - name: Display final summary of results
+      ansible.builtin.debug:
+        var: snapshot_revert_results
