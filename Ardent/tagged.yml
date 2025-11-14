@@ -336,6 +336,10 @@
       ansible.builtin.setup:
       # Apply your targeting logic here too, so we don't gather facts unnecessarily on skipped hosts
       when: (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
+      tags:
+        - always # Ensure this runs even if specific tags are used
+        - os-config
+        - linux
     # --- Pre-Check Task ---
     - name: Check if IPv6 is already disabled
       ansible.builtin.set_fact:
