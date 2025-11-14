@@ -337,7 +337,7 @@
 
   tasks:
   ##--Begin New AI P-8 Tasks-----------
-    - name: Ensure facts are gathered first
+    - name: P-8_T-1 Ensure facts are gathered first
       ansible.builtin.setup:
       # Apply your targeting logic here too, so we don't gather facts unnecessarily on skipped hosts
       #when: (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
@@ -349,7 +349,7 @@
         - no_ip_v6
 
     # --- Pre-Check Task ---
-    - name: Check if IPv6 is already disabled
+    - name: P-8_T-2 Check if IPv6 is already disabled
       ansible.builtin.set_fact:
         ipv6_already_disabled: "{{ (ansible_all_ipv6_addresses |default([]) | length) == 0 }}"
       # Your existing targeting logic applied here
@@ -359,7 +359,7 @@
         - os-config
         - linux
     
-    - name: Debug IPv6 status
+    - name: P-8_T-3 Debug IPv6 status
       ansible.builtin.debug:
         msg: "IPv6 is already disabled: {{ ipv6_already_disabled }}"
       when: (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
@@ -370,7 +370,7 @@
 
 
     # --- Configuration Tasks ---
-    - name: block for IPv^ config tasks
+    - name: P-8_T-4 block for IPv^ config tasks
       when: (target_host | default('all') == "all") or (inventory_hostname == target_host | default('none'))
 
       block:
