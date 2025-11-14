@@ -12,7 +12,8 @@
   tasks:
     - name: Revert each VM to the 'pre_update_snapshot' snapshot
       # We can use either the community or the certified module now
-      community.vmware.vmware_guest_snapshot:
+      #community.vmware.vmware_guest_snapshot:
+      vmware.vmware.vm_snapshot:
       # Or the certified module if you prefer: vmware.vmware.vm_snapshot:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
