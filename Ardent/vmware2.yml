@@ -19,6 +19,7 @@
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
         datacenter: "{{ vcenter_datacenter }}" # <-- Replace with your actual datacenter name
+        folder: "{{ vcenter_folder }}"
         name: "{{ item }}"               # <-- 'item' will be each VM name from the list
         snapshot_name: "{{ vm_snapshot_name }}" # <-- The snapshot name
         state: revert
