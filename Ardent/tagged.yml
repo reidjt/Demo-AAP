@@ -403,7 +403,7 @@
       when: 
         - grub_update_result.changed 
         - ansible_os_family in ['RedHat', 'Suse']
-        - (target_host | default('all') == "all" ) or (inventory_hostname == target_host | default('none'))
+        - ( (target_host | default('all')) == "all" or (inventory_hostname == (target_host | default('none'))) )
       tags:
         - no_ip_v6
         - os-config
