@@ -365,8 +365,8 @@
     - name: P-8_T-3 Update grub configuration if modified (RHEL/CENTOS/SUSE)
       ansible.builtin.command: grub2-mkconfig -o /boot/grub2/grub.cfg
       when: >
-        grub_update_result.changed and ansible_os_family in ['RedHat', 'Suse'] and
-        (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
+        - grub_update_result.changed and ansible_os_family in ['RedHat', 'Suse']
+        - (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
       changed_when: true
       tags:
         - no_ip_v6
@@ -375,7 +375,9 @@
 
     - name: P-8_T-4 Update grub configuration if modified (Debian/Ubuntu)
       ansible.builtin.command: update-grub
-      when: grub_update_result.changed and ansible_os_family == 'Debian'
+      when: 
+        - grub_update_result.changed and ansible_os_family == 'Debian'
+        - (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
       changed_when: true
       tags:
         - no_ip_v6
