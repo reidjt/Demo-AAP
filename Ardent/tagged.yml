@@ -391,9 +391,9 @@
           line: 'GRUB_CMDLINE_LINUX="\1 ipv6.disable=1"'
           backrefs: yes
         register: grub_update_result
-        # when: 
+        when: 
         #   # Only run if IPv6 is NOT already disabled
-        #   - not ipv6_already_disabled
+          - not ipv6_already_disabled
         #   # Your existing targeting logic
         #   - (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
         tags:
