@@ -324,7 +324,7 @@
 - name: P-8 OS Configureation Changes
   hosts: all
   become: yes
-  gather_facts: yes
+  gather_facts: false
   # Using the limit parameter to target specific hosts if needed refrence extra var target_host.
   tags:
     - os-config
@@ -335,7 +335,7 @@
     - name: Ensure facts are gathered first
       ansible.builtin.setup:
       # Apply your targeting logic here too, so we don't gather facts unnecessarily on skipped hosts
-      when: (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
+      #when: (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
       tags:
         - always # Ensure this runs even if specific tags are used
         - os-config
