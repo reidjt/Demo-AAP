@@ -401,7 +401,7 @@
       ansible.builtin.command: grub2-mkconfig -o /boot/grub2/grub.cfg
       changed_when: true
       when: 
-        - (grub_update_result.changed and ansible_os_family in ['RedHat', 'Suse']) 
+        - grub_update_result.changed and ansible_os_family in ['RedHat', 'Suse']
         - (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
       tags:
         - no_ip_v6
@@ -412,7 +412,7 @@
       ansible.builtin.command: update-grub
       changed_when: true
       when: 
-        - (grub_update_result.changed and ansible_os_family == 'Debian')
+        - grub_update_result.changed and ansible_os_family == 'Debian'
         - (target_host is undefined) or (target_host == "all") or (inventory_hostname == target_host)
       tags:
         - no_ip_v6
