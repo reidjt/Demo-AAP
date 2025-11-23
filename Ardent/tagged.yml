@@ -365,7 +365,7 @@
           ansible.builtin.reboot:
             reboot_timeout: 600
           when: reboot_file_status.stat.exists
-      when: ansible_os_family == 'Debian'
+      #when: ansible_os_family == 'Debian'
       tags:
        - patching
        - linux
