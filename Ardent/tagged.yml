@@ -317,6 +317,26 @@
       tags:
         - patching
         - linux
+        
+    - name: P-6_T-3 Check if reboot is required (common after dist-upgrades, e.g. kernel updates)
+      ansible.builtin.command: needs-restarting -r
+      register: reboot_check_result
+      ignore_errors: true # The command exits with error code 1 if a reboot is needed
+      changed_when: reboot_check_result.rc == 1
+      when: ansible_os_family in ['RedHat', 'Suse']
+      tags:
+        - patching
+        - linux
+
+    - name: P-6_T-4Perform a system reboot if necessary
+      ansible.builtin.reboot:
+      # Use the reboot-required file created by apt or the command result from dnf check
+      when:
+        - ansible_os_family == 'Debian' and ansible_facts['system']['lsb']['release'] == "reboot required" # Example apt check
+        - ansible_os_family in ['RedHat', 'Suse'] and reboot_check_result.rc == 1
+      tags:
+        - patching
+        - linux
 
 
 - name: P-7 Perform a full distribution upgrade (dist-upgrade)
