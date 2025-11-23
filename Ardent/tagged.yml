@@ -295,11 +295,19 @@
 
   tasks:
     - name: P-6_T-1 Run safe 'apt upgrade' for Debian/Ubuntu systems
-      # ansible.builtin.apt:
-      #   update_cache: yes
-      #   cache_valid_time: 3600 # Update apt cache if older than 1 hour
-      #   upgrade: safe # The 'safe' upgrade option only upgrades what can be upgraded without installing new packages
-      # ignore_errors: yes
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600 # Update apt cache if older than 1 hour
+        upgrade: safe # The 'safe' upgrade option only upgrades what can be upgraded without installing new packages
+      ignore_errors: yes
+      when: ansible_os_family == 'Debian'
+      tags:
+        - Ubuntu
+        - patching
+        - linux
+
+      
+    - name: P-6_T-1A Run update using packages' for Debian/Ubuntu systems retry
       ansible.builtin.package:
         name: '*'
         state: latest
@@ -575,7 +583,7 @@
         reboot_timeout: 600
       # Only run this task if the previous task's 'changed' status is True
       when: target_change_result.changed
-      
+
 - name: P-10 enable GUI interface on Linux Servers
   hosts: all
   become: yes
