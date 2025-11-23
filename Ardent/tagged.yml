@@ -299,6 +299,7 @@
         update_cache: yes
         cache_valid_time: 3600 # Update apt cache if older than 1 hour
         upgrade: safe # The 'safe' upgrade option only upgrades what can be upgraded without installing new packages
+      ignore_errors: yes
       when: ansible_os_family == 'Debian'
       tags:
         - patching
