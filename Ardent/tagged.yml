@@ -338,7 +338,7 @@
         - patching
         - linux
 
-    - name: reboot Ubuntu if needed Block
+    - name: P-6 T5--7reboot Ubuntu if needed Block
       block:
         - name: P-6_T-5 Check for reboot-required file using the stat module
           ansible.builtin.stat:
@@ -370,33 +370,57 @@
     - dist-upgrade
     - linux
   tasks:
-    - name: Run 'apt full-upgrade' (dist-upgrade) for Debian/Ubuntu systems
+    - name: P-7_T-1Run 'apt full-upgrade' (dist-upgrade) for Debian/Ubuntu systems
       ansible.builtin.apt:
         update_cache: yes
         cache_valid_time: 3600 # Update apt cache if older than 1 hour
         upgrade: dist # or 'full' - they are synonyms
       when: ansible_os_family == 'Debian'
 
-    - name: Run 'dnf/yum/zypper update' for RHEL/SUSE systems
+    - name: P-7_T-2 Run 'dnf/yum/zypper update' for RHEL/SUSE systems
       # For RPM-based systems, 'state: latest' with name: '*' performs a full update
       ansible.builtin.package:
         name: '*'
         state: latest
       when: ansible_os_family in ['RedHat', 'Suse']
 
-    - name: Check if reboot is required (common after dist-upgrades, e.g. kernel updates)
+    - name: P-7_T-3 Check if reboot is required (common after dist-upgrades, e.g. kernel updates)
       ansible.builtin.command: needs-restarting -r
       register: reboot_check_result
       ignore_errors: true # The command exits with error code 1 if a reboot is needed
       changed_when: reboot_check_result.rc == 1
       when: ansible_os_family in ['RedHat', 'Suse']
 
-    - name: Perform a system reboot if necessary
+    - name: P-7_T-4 Perform a system reboot if necessary
       ansible.builtin.reboot:
       # Use the reboot-required file created by apt or the command result from dnf check
       when:
-        - ansible_os_family == 'Debian' and ansible_facts['system']['lsb']['release'] == "reboot required" # Example apt check
+        #- ansible_os_family == 'Debian' and ansible_facts['system']['lsb']['release'] == "reboot required" # Example apt check
         - ansible_os_family in ['RedHat', 'Suse'] and reboot_check_result.rc == 1
+    
+    - name: P-7_T5--7reboot Ubuntu if needed Block
+      block:
+        - name: P-7_T-5 Check for reboot-required file using the stat module
+          ansible.builtin.stat:
+            path: /var/run/reboot-required
+          register: reboot_file_status
+          # Delegates the task to the current machine, rather than the Ansible controller
+          delegate_to: "{{ inventory_hostname }}" 
+
+        - name: P-7_T-6 Display warning if a reboot is needed
+          ansible.builtin.debug:
+            msg: "WARNING: A system reboot is required on {{ inventory_hostname }}."
+          # This task runs only if the path exists
+          when: reboot_file_status.stat.exists
+
+        - name: P-7_T-7 Perform system reboot
+          ansible.builtin.reboot:
+            reboot_timeout: 600
+          when: reboot_file_status.stat.exists
+      when: ansible_os_family == 'Debian'
+      tags:
+       - patching
+       - linux
 
 - name: P-8 OS Configureation Changes
   hosts: all
