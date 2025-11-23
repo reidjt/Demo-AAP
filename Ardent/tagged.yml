@@ -658,4 +658,61 @@
         reboot_timeout: 600
       # Only reboot if either the sysctl or grub configuration actually changed
       when: sysctl_changes.changed or grub_change.changed
+
+
+- name: P-12 verify packages are installed
+  hosts: all
+  become: yes
+  gather_facts: yes
+  tags:
+    - verify-packages 
+    - linux
+
+  tasks:
+    - name: Check if vim is installed
+      ansible.builtin.command: which vim
+      register: vim_check
+      ignore_errors: yes # Continue even if a package is not found
+
+    - name: Report vim installation status
+      ansible.builtin.debug:
+        msg: "Vim is installed at: {{ vim_check.stdout }}"
+      when: vim_check.rc == 0
+
+    - name: Report vim not installed
+      ansible.builtin.debug:
+        msg: "Vim is NOT installed."
+      when: vim_check.rc != 0
+
+    - name: Check if wget is installed
+      ansible.builtin.command: which wget
+      register: wget_check
+      ignore_errors: yes
+
+    - name: Report wget installation status
+      ansible.builtin.debug:
+        msg: "Wget is installed at: {{ wget_check.stdout }}"
+      when: wget_check.rc == 0
+
+    - name: Report wget not installed
+      ansible.builtin.debug:
+        msg: "Wget is NOT installed."
+      when: wget_check.rc != 0
+
+    - name: Check if curl is installed
+      ansible.builtin.command: which curl
+      register: curl_check
+      ignore_errors: yes
+
+    - name: Report curl installation status
+      ansible.builtin.debug:
+        msg: "Curl is installed at: {{ curl_check.stdout }}"
+      when: curl_check.rc == 0
+
+    - name: Report curl not installed
+      ansible.builtin.debug:
+        msg: "Curl is NOT installed."
+      when: curl_check.rc != 0
+    
+    
 ...
