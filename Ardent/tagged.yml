@@ -565,11 +565,17 @@
         group: root
         state: link
         force: yes
+      # Register the result of this task in a variable
+      register: target_change_result
 
     - name: P-9_T3 Reboot to apply the new boot target
+      # ansible.builtin.reboot:
+      # when: ansible_facts['systemd']['default_target'] != desired_target
       ansible.builtin.reboot:
-      when: ansible_facts['systemd']['default_target'] != desired_target
-
+        reboot_timeout: 600
+      # Only run this task if the previous task's 'changed' status is True
+      when: target_change_result.changed
+      
 - name: P-10 enable GUI interface on Linux Servers
   hosts: all
   become: yes
